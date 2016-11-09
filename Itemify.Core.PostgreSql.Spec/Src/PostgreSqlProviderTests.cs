@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Core.PostgreSql.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -64,7 +65,7 @@ namespace Itemify.Core.PostgreSql.Spec
         }
 
         [TestMethod()]
-        public EntityA InsertIDefaultEntity()
+        public EntityA Insert_IDefaultEntity()
         {
             var tableName = "table_c";
             var entity = new EntityA()
@@ -91,7 +92,7 @@ namespace Itemify.Core.PostgreSql.Spec
 
 
         [TestMethod()]
-        public EntityB InsertIGloballyUniqueEntity()
+        public EntityB Insert_IGloballyUniqueEntity()
         {
             var tableName = "table_d";
             var entity = new EntityB()
@@ -117,7 +118,7 @@ namespace Itemify.Core.PostgreSql.Spec
         }
 
         [TestMethod()]
-        public EntityC InsertEntityC()
+        public EntityC Insert_IAnonymousEntity()
         {
             var tableName = "table_e";
             var entity = new EntityC()
@@ -134,10 +135,10 @@ namespace Itemify.Core.PostgreSql.Spec
 
 
         [TestMethod()]
-        public void QueryIGloballyUniqueEntity()
+        public void Query_IGloballyUniqueEntity()
         {
             var tableName = "table_d";
-            var expected = InsertIGloballyUniqueEntity();
+            var expected = Insert_IGloballyUniqueEntity();
 
             var actual = provider.Query<EntityB>($"SELECT * FROM {provider.ResolveTableName("table_d")} WHERE \"Id\" = @0", expected.Id)
                 .FirstOrDefault();
@@ -161,10 +162,40 @@ namespace Itemify.Core.PostgreSql.Spec
 
 
         [TestMethod()]
-        public void QueryIDefaultEntity()
+        [ExpectedException(typeof(MissingPropertyException))]
+        public void Query_IGloballyUniqueEntity_SkippingTableResolve()
+        {
+            var expected = Insert_IGloballyUniqueEntity();
+
+            provider.Query<EntityB>($"SELECT \"Id\" AS GUID FROM {provider.ResolveTableName("table_d")} WHERE \"Id\" = @0", expected.Id)
+                .First();
+        }
+
+        [TestMethod()]
+        public void Query_IGloballyUniqueEntity_NoDeserialization()
+        {
+            var expected = Insert_IGloballyUniqueEntity();
+
+            var objects = provider.Query($"SELECT * FROM {provider.ResolveTableName("table_d")} WHERE \"Id\" = @0", expected.Id)
+                .FirstOrDefault();
+
+            var pos = 0;
+            Assert.IsNotNull(objects);
+            Assert.AreEqual(expected.Id, objects[pos++]);
+            Assert.AreEqual(expected.DateTime, objects[pos++]);
+            Assert.AreEqual(expected.NullableDateTime, objects[pos++]);
+            Assert.AreNotEqual(expected.DateTimeOffset, objects[pos++], "Missing: new DateTimeOffset(DateTime.SpecifyKind((DateTime) o, DateTimeKind.Local))");
+            Assert.AreEqual(expected.Integer, objects[pos++]);
+            Assert.AreEqual(expected.NullableInteger, objects[pos++]);
+            Assert.AreEqual(expected.String, objects[pos++]);
+            Assert.AreEqual(expected.Varchar, objects[pos++]);
+        }
+
+        [TestMethod()]
+        public void Query_IDefaultEntity()
         {
             var tableName = "table_c";
-            var expected = InsertIDefaultEntity();
+            var expected = Insert_IDefaultEntity();
 
             var actual = provider.Query<EntityA>($"SELECT * FROM {provider.ResolveTableName("table_c")} WHERE \"Id\" = @0", expected.Id)
                 .FirstOrDefault();

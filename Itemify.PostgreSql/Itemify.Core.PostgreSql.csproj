@@ -49,6 +49,7 @@
     <Compile Include="Src\IPostgreSqlEntity.cs" />
     <Compile Include="Src\Logging\DebuggingSqlLog.cs" />
     <Compile Include="Src\Logging\ISqlLog.cs" />
+    <Compile Include="Src\Exceptions\MissingPropertyException.cs" />
     <Compile Include="Src\PostgreSqlColumnSchema.cs" />
     <Compile Include="Src\PostgreSqlColumnAttribute.cs" />
     <Compile Include="Src\PostgreSqlConnectionContext.cs" />

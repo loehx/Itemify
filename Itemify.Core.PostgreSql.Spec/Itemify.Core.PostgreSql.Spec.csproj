@@ -55,7 +55,7 @@
     <Compile Include="Src\PostgreSqlProviderTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ItemicAL.PostgreSql\Itemify.Core.PostgreSql.csproj">
+    <ProjectReference Include="..\Itemify.PostgreSql\Itemify.Core.PostgreSql.csproj">
       <Project>{5F954A9C-7F1B-4227-870B-53772A2C056E}</Project>
       <Name>Itemify.Core.PostgreSql</Name>
     </ProjectReference>

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Core.PostgreSql.Logging;
 using Itemify.Core.PostgreSql.Util;
 using Npgsql;
@@ -245,14 +246,14 @@ namespace Itemify.Core.PostgreSql
                 throw new ArgumentNullException(nameof(query));
 
             Debug.Assert(query.Contains("@" + (parameters.Length - 1)), "Query should contain exactly " + parameters.Length + " placeholders like @0, @1, ...");
-
+   
             var type = typeof(TEntity);
 
             using (var reader = db.Query(query, parameters))
             {
                 var allColumns = ReflectionUtil.GetColumnSchemas(type);
                 var columns = GetColumns(reader)
-                    .Select(name => allColumns.First(c => c.Name.Equals(name)))
+                    .Select(name => GetColumnSchema<TEntity>(name, allColumns))
                     .ToArray();
                 var valueSets = GetValueSets(reader);
 
@@ -271,6 +272,15 @@ namespace Itemify.Core.PostgreSql
                     yield return result;
                 }
             }
+        }
+
+        private static PostgreSqlColumnSchema GetColumnSchema<T>(string name, IReadOnlyList<PostgreSqlColumnSchema> allColumns)
+        {
+            var schema = allColumns.FirstOrDefault(c => c.Name.Equals(name));
+            if (schema == null)
+                throw new MissingPropertyException(typeof(T), name);
+
+            return schema;
         }
 
         public IEnumerable<object[]> Query(string query, params object[] parameters)

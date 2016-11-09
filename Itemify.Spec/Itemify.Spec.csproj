@@ -59,7 +59,7 @@
     <Compile Include="Src\TypeSetTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ItemicAL\Itemify.csproj">
+    <ProjectReference Include="..\Itemify\Itemify.csproj">
       <Project>{948C0222-8922-4B99-B815-D8C0CB83405A}</Project>
       <Name>Itemify</Name>
     </ProjectReference>

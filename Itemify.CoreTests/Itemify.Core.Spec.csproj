@@ -55,7 +55,7 @@
     <Compile Include="Src\DataAccess\ItemStructureTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ItemicAL.Core\Itemify.Core.csproj">
+    <ProjectReference Include="..\Itemify.Core\Itemify.Core.csproj">
       <Project>{9C423391-F802-4CB3-880E-060340721C7D}</Project>
       <Name>Itemify.Core</Name>
     </ProjectReference>
