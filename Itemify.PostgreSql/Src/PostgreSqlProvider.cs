@@ -35,14 +35,16 @@ namespace Itemify.Core.PostgreSql
     {
         private PostgreSqlConnectionContext context;
         private readonly PostgreSqlDatabase db;
+        private readonly string schema;
 
         public const string TABLE_PLACEHOLDER = "{table}";
 
-        public string Schema { get; }
+        public string Schema => schema;
+        public int ConnectionId => context.ConnectionId;
 
         public PostgreSqlProvider(PostgreSqlConnectionPool connectionPool, ISqlLog log, string schema = "public")
         {
-            this.Schema = schema;
+            this.schema = schema;
             context = connectionPool.GetContext();
             db = new PostgreSqlDatabase(context, log);
         }

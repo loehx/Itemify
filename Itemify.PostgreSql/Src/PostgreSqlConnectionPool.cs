@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Threading;
 using Npgsql;
 
@@ -16,7 +17,10 @@ namespace Itemify.Core.PostgreSql
 
         private const int WaitInterval = 10;
 
-        private int _count;
+        private int count;
+        private int poolId;
+
+        private static int connectionPoolCount = 0;
 
         public PostgreSqlConnectionPool(string connectionString, int maxCount, int timeoutMilliseconds)
         {
@@ -24,19 +28,24 @@ namespace Itemify.Core.PostgreSql
             _maxCount = maxCount;
             _timeout = timeoutMilliseconds;
             _syncRoot = new object();
-            _count = 0;
+            count = 0;
+            poolId = ++connectionPoolCount;
+
+            write_log($"New pool: {connectionString}");
+            write_log($"    size: {maxCount}");
+            write_log($"    timeout: {timeoutMilliseconds} ms");
         }
 
         public int AvailableCount => _available.Count;
-        public int InUseCount => _count - _available.Count;
-        public int TotalCount => _count;
+        public int InUseCount => count - _available.Count;
+        public int TotalCount => count;
 
         internal PostgreSqlConnectionContext GetContext()
         {
             NpgsqlConnection c;
             var waitTime = 0;
 
-            while (_maxCount == _count && _available.Count == 0)
+            while (_maxCount == count && _available.Count == 0)
             {
                 if (waitTime >= _timeout)
                     throw new TimeoutException($"No available connection found in connection pool within {_timeout} ms.");
@@ -49,11 +58,13 @@ namespace Itemify.Core.PostgreSql
             {
                 if (_available.Count == 0)
                 {
+                    write_log($"Create new connection #{count + 1} of {_maxCount}");
                     c = new NpgsqlConnection(_connectionString);
-                    _count++;
+                    count++;
                 }
                 else
                 {
+                    write_log($"Recycling connection #{_available.Count} of {_available.Count} available (after {waitTime} ms)");
                     c =  _available.Dequeue();
                 }
             }
@@ -61,13 +72,14 @@ namespace Itemify.Core.PostgreSql
             if (c.State != ConnectionState.Open)
                 c.Open();
 
-            return new PostgreSqlConnectionContext(c, DisposeConnection);
+            return new PostgreSqlConnectionContext(c, DisposeConnection, count);
         }
 
-        internal void DisposeConnection(NpgsqlConnection c)
+        internal void DisposeConnection(NpgsqlConnection c, int connectionId)
         {
             lock (_syncRoot)
             {
+                write_log($"Connection #{connectionId} released to pool. (available connections: {_available.Count + 1})");
                 _available.Enqueue(c);
             }
         }
@@ -78,9 +90,9 @@ namespace Itemify.Core.PostgreSql
             {
                 lock (_syncRoot)
                 {
-                    if (_available.Count != _count)
+                    if (_available.Count != count)
                         throw new Exception(
-                            $"{_count - _available.Count} connections have not been released to the connection pool.");
+                            $"{count - _available.Count} connections have not been released to the connection pool.");
 
                     while (_available.Count > 0)
                     {
@@ -93,6 +105,12 @@ namespace Itemify.Core.PostgreSql
                     }
                 }
             }
+        }
+
+        [Conditional("DEBUG")]
+        private void write_log(string message)
+        {
+            Debug.WriteLine($"[PostgreSqlConnectionPool#{poolId}] " + message);
         }
     }
 }
