@@ -17,6 +17,8 @@ namespace Itemify.Core.PostgreSql
 
         public bool Nullable { get; }
 
+        public PostgreSqlIndexType Indexing { get; }
+
         public PostgreSqlColumnSchema(PostgreSqlColumnAttribute inner, PropertyInfo propertyInfo)
         {
             this.propertyInfo = propertyInfo;
@@ -27,6 +29,8 @@ namespace Itemify.Core.PostgreSql
             Name = inner.Name ?? propertyInfo.Name;
             DataType = inner.DataType ?? SqlUtil.GetSqlTypeFromType(type);
             Nullable = underlyingType != null || type.IsClass;
+            Indexing = inner.Indexing;
+            // TODO: Implement column indexing
 
             this.parseFunc = GetParseFuncByType(type, underlyingType != null);
         }

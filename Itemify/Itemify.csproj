@@ -50,23 +50,7 @@
   <ItemGroup>
     <Compile Include="Lib\Utils\EnumerableExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Src\Exceptions\MissingCustomAttribute.cs" />
-    <Compile Include="Src\Item\SlimItem.cs" />
-    <Compile Include="Src\Item\ChildItem.cs" />
-    <Compile Include="Src\Item\GodItem.cs" />
-    <Compile Include="Src\Item\IItemicItem.cs" />
-    <Compile Include="Src\Item\ItemCollection.cs" />
-    <Compile Include="Src\ItemicAl.cs" />
-    <Compile Include="Src\Item\ItemBase.cs" />
-    <Compile Include="Src\Item\ParentItem.cs" />
-    <Compile Include="Src\Keywording\KeywordSet.cs" />
-    <Compile Include="Src\Typing\TypeItem.cs" />
-    <Compile Include="Src\Typing\TypeDefinition.cs" />
-    <Compile Include="Src\Typing\TypeDefinitionAttribute.cs" />
-    <Compile Include="Src\Typing\TypeSet.cs" />
-    <Compile Include="Src\Typing\TypeValue.cs" />
-    <Compile Include="Src\Typing\TypeValueAttribute.cs" />
-    <Compile Include="Src\Typing\TypeManager.cs" />
+    <Compile Include="Src\Itemify.cs" />
     <Compile Include="Lib\Utils\EnumUtil.cs" />
   </ItemGroup>
   <ItemGroup>

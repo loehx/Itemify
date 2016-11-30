@@ -55,6 +55,7 @@
     <Compile Include="Src\PostgreSqlConnectionContext.cs" />
     <Compile Include="Src\PostgreSqlConnectionPool.cs" />
     <Compile Include="Src\PostgreSqlDatabase.cs" />
+    <Compile Include="Src\PostgreSqlIndexType.cs" />
     <Compile Include="Src\PostgreSqlProvider.cs" />
     <Compile Include="Util\EnumerableExtensions.cs" />
     <Compile Include="Util\ReflectionUtil.cs" />

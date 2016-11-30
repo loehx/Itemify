@@ -40,16 +40,42 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Src\Exceptions\MissingCustomAttribute.cs" />
+    <Compile Include="Src\ItemAccess\Entities\DefaultItemEntity.cs" />
+    <Compile Include="Src\ItemAccess\Entities\GuidItemEntity.cs" />
+    <Compile Include="Src\ItemAccess\Entities\ItemEntityBase.cs" />
+    <Compile Include="Src\ItemAccess\Entities\SubTypeMappingEntity.cs" />
+    <Compile Include="Src\Item\ChildItem.cs" />
+    <Compile Include="Src\Item\GodItem.cs" />
+    <Compile Include="Src\Item\IItemicItem.cs" />
+    <Compile Include="Src\Item\ItemBase.cs" />
+    <Compile Include="Src\Item\ItemCollection.cs" />
+    <Compile Include="Src\Item\ParentItem.cs" />
+    <Compile Include="Src\Item\SlimItem.cs" />
+    <Compile Include="Src\Keywording\KeywordSet.cs" />
+    <Compile Include="Src\Typing\TypeDefinition.cs" />
+    <Compile Include="Src\Typing\TypeDefinitionAttribute.cs" />
+    <Compile Include="Src\Typing\TypeItem.cs" />
+    <Compile Include="Src\Typing\TypeManager.cs" />
+    <Compile Include="Src\Typing\TypeSet.cs" />
+    <Compile Include="Src\Typing\TypeValue.cs" />
+    <Compile Include="Src\Typing\TypeValueAttribute.cs" />
     <Compile Include="Src\Utils\AssemblyUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Src\DataAccess\ItemProvider.cs" />
-    <Compile Include="Src\DataAccess\ItemStructure.cs" />
+    <Compile Include="Src\ItemAccess\ItemProvider.cs" />
+    <Compile Include="Src\ItemAccess\ItemStructure.cs" />
     <Compile Include="Src\Utils\EnumerableExtensions.cs" />
     <Compile Include="Src\Utils\EnumUtil.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Src\DataAccess\Migrations\version-001.sql" />
-    <Content Include="Src\DataAccess\PostgreSql\create_item_table.sql" />
+    <Content Include="Src\ItemAccess\Migrations\version-001.sql" />
+    <Content Include="Src\ItemAccess\PostgreSql\create_item_table.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Itemify.PostgreSql\Itemify.Core.PostgreSql.csproj">
+      <Project>{5F954A9C-7F1B-4227-870B-53772A2C056E}</Project>
+      <Name>Itemify.Core.PostgreSql</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
