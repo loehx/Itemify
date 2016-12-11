@@ -10,44 +10,38 @@ namespace Itemify.Spec
     [TestClass]
     public class RegisterTests
     {
-        [TestInitialize]
-        public void BeforeEach()
-        {
-            TypeManager.Reset();
-        }
-
         [TestMethod]
         public void DeviceTypes()
         {
-            TypeManager.Register<DeviceType>();
+            new TypeManager().Register<DeviceType>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(MissingCustomAttribute))]
         public void DeviceTypesMissingDefinitionAttribute()
         {
-            TypeManager.Register<DeviceTypesMissingDefinitionAttribute>();
+            new TypeManager().Register<DeviceTypesMissingDefinitionAttribute>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(MissingCustomAttribute))]
         public void DeviceTypesMissingSingleTypeValueAttribute()
         {
-            TypeManager.Register<DeviceTypesMissingSingleTypeValueAttribute>();
+            new TypeManager().Register<DeviceTypesMissingSingleTypeValueAttribute>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(DuplicateNameException))]
         public void DeviceTypesDuplicateTypeValue()
         {
-            TypeManager.Register<DeviceTypesDuplicateTypeValue>();
+            new TypeManager().Register<DeviceTypesDuplicateTypeValue>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void PassingANonEnumToRegister()
         {
-            TypeManager.Register<NoEnum>();
+            new TypeManager().Register<NoEnum>();
         }
 
         private struct NoEnum
@@ -58,22 +52,23 @@ namespace Itemify.Spec
         [ExpectedException(typeof(Exception))]
         public void RegisterSameDefinitionTwice()
         {
-            TypeManager.Register<DeviceType>();
-            TypeManager.Register<DeviceType>();
+            var tm = new TypeManager();
+            tm.Register<DeviceType>();
+            tm.Register<DeviceType>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void DeviceTypesContainingIllegalCharacters()
         {
-            TypeManager.Register<DeviceTypesContainingIllegalCharacters>();
+            new TypeManager().Register<DeviceTypesContainingIllegalCharacters>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void DeviceTypesContainingIllegalCharacters2()
         {
-            TypeManager.Register<DeviceTypesContainingIllegalCharacters2>();
+            new TypeManager().Register<DeviceTypesContainingIllegalCharacters2>();
         }
     }
 }

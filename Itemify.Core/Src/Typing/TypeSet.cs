@@ -6,40 +6,54 @@ namespace Itemify.Core.Typing
 {
     public class TypeSet : ICloneable
     {
+        private readonly TypeManager typeManager;
         private readonly List<TypeItem> _items;
 
-        public TypeSet()
+        public bool IsEmpty => _items.Count == 0;
+
+        public TypeSet(TypeManager typeManager)
         {
+            this.typeManager = typeManager;
             _items = new List<TypeItem>();
         }
 
-        internal TypeSet(IEnumerable<TypeItem> items)
+        internal TypeSet(TypeManager typeManager, IEnumerable<TypeItem> items)
         {
+            this.typeManager = typeManager;
             this._items = new List<TypeItem>(items);
         }
 
         public void Set<TEnum>(TEnum enumValue)
             where TEnum : struct
         {
-            var definition = TypeManager.GetDefinitionByType(typeof(TEnum));
+            var definition = typeManager.GetDefinitionByType(typeof(TEnum));
             var item = definition.GetItemByEnumValue((int)(object)enumValue);
 
             Set(item);
         }
 
-        public void Unset<TEnum>(TEnum enumValue, bool @on = true)
+        public void Unset<TEnum>(TEnum enumValue)
             where TEnum : struct
         {
-            var definition = TypeManager.GetDefinitionByType(typeof(TEnum));
+            var definition = typeManager.GetDefinitionByType(typeof(TEnum));
             var item = definition.GetItemByEnumValue((int)(object)enumValue);
 
             Unset(item);
         }
 
+        public bool Contains<TEnum>(TEnum enumValue)
+            where TEnum : struct
+        {
+            var definition = typeManager.GetDefinitionByType(typeof(TEnum));
+            var item = definition.GetItemByEnumValue((int)(object)enumValue);
+
+            return _items.Contains(item);
+        }
+
         internal void Set(TypeItem item)
         {
-            if (_items.Count > 0)
-                _items.RemoveAll(k => k.Definition.Equals(item.Definition)); // Remove all items having the same definition
+            if (_items.Contains(item))
+                return;
 
             _items.Add(item);
         }
@@ -66,19 +80,15 @@ namespace Itemify.Core.Typing
             return string.Join("&", str);
         }
 
-        public static TypeSet Parse(string source)
+        public TypeSet Parse(string source)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            var items = source.Split('&').Select(TypeItem.Parse);
-            return new TypeSet(items);
+            return typeManager.ParseTypeSet(source);
         }
 
-        public static TypeSet From<TEnum>(TEnum enumValue)
+        public TypeSet From<TEnum>(TEnum enumValue)
             where TEnum : struct
         {
-            var set = new TypeSet();
-            set.Set(enumValue);
-            return set;
+            return typeManager.GetTypeSet(enumValue);
         }
 
         public override bool Equals(object obj)
@@ -92,7 +102,7 @@ namespace Itemify.Core.Typing
 
         public object Clone()
         {
-            return new TypeSet(_items);
+            return new TypeSet(typeManager, _items);
         }
 
         public bool Equals(TypeSet typeSet)

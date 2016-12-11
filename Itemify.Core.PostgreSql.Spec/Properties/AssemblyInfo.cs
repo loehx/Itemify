@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ItemicAL.Core.PostgreSql.Spec")]
+[assembly: AssemblyTitle("Itemify.Core.PostgreSql.Spec")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ItemicAL.Core.PostgreSql.Spec")]
+[assembly: AssemblyProduct("Itemify.Core.PostgreSql.Spec")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

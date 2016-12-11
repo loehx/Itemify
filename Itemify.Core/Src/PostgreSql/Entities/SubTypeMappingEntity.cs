@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Itemify.Core.PostgreSql;
 
-namespace Itemify.Core.Src.ItemAccess.Entities
+namespace Itemify.Core.ItemAccess.Entities
 {
     class SubTypeMappingEntity : IAnonymousEntity
     {
@@ -14,9 +10,6 @@ namespace Itemify.Core.Src.ItemAccess.Entities
 
         [PostgreSqlColumn]
         public Guid Guid { get; set; }
-
-        [PostgreSqlColumn]
-        public int Id { get; set; }
 
         [PostgreSqlColumn]
         public string Type { get; set; }

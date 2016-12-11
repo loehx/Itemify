@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 namespace Itemify.Core.Item
 {
     public class ItemCollection<T> : IList<T>
-        where T: IItemicItem
+        where T: IItemReference
     {
         private List<T> inner { get; }
 

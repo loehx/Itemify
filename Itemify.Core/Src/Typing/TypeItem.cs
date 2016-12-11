@@ -22,46 +22,6 @@ namespace Itemify.Core.Typing
             Definition = definition;
         }
 
-        internal static TypeItem From<TEnum>(TEnum type)
-        {
-            var t = typeof(TEnum);
-            if (!t.IsEnum)
-                throw new ArgumentException($"Parameter {nameof(type)} must be an enum. Actual: {t}");
-
-            var attr = t.GetCustomAttribute(typeof(TypeDefinitionAttribute)) as TypeDefinitionAttribute;
-            if (attr == null)
-                throw new MissingCustomAttribute($"Type {t} is missing a custom attribute of type {nameof(TypeDefinitionAttribute)}");
-
-            var typeValueAttribute = EnumUtil.GetCustomAttribute<TypeValueAttribute>(type);
-            if (typeValueAttribute == null)
-                throw new MissingCustomAttribute($"Parameter {nameof(type)} must have a custom attribute of type: {nameof(TypeValueAttribute)}");
-
-            var definition = TypeManager.GetDefinitionByType(t);
-
-            return definition.GetItemByValue(typeValueAttribute.Value);
-        }
-
-        public static TypeItem Parse(string source)
-        {
-            try
-            {
-                var spl = source.Split('=');
-                if (spl.Length != 2)
-                    throw new Exception("No seperator found (=).");
-
-                var name = spl[0];
-                var value = spl[1];
-                var definition = TypeManager.GetDefinitionByName(name);
-                var item = definition.GetItemByValue(value);
-
-                return item;
-            }
-            catch (Exception err)
-            {
-                throw new Exception($"Unable to parse {nameof(TypeItem)} from: '{source}'", err);
-            }
-        }
-
         public override string ToString()
         {
             return $"{Inner.Value}@{Name} <{nameof(TypeItem)}>";

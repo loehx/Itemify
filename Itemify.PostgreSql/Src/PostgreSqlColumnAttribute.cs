@@ -10,7 +10,7 @@ namespace Itemify.Core.PostgreSql
         public string DataType { get; }
         public PostgreSqlIndexType Indexing { get; }
 
-        public PostgreSqlColumnAttribute(string name = null, string dataType = null, bool primaryKey = false, object defaultValue = null, PostgreSqlIndexType indexing = PostgreSqlIndexType.Clustered)
+        public PostgreSqlColumnAttribute(string name = null, string dataType = null, bool primaryKey = false, object defaultValue = null, PostgreSqlIndexType indexing = PostgreSqlIndexType.None)
         {
             Indexing = indexing;
             Name = name;

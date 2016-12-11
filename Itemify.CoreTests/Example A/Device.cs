@@ -1,11 +1,23 @@
-﻿using Itemify.Core.Item;
+﻿using System;
+using Itemify.Core.Item;
 
-namespace Itemify.Spec.Example_A
+namespace Itemify.Core.Spec.Example_A
 {
-    internal class Device : ItemBase
+    internal class Device
     {
-        public Device(IItemicItem parent) : base(parent)
+        private readonly IItem item;
+
+        public Guid Guid => item.Guid;
+
+        public string Name
         {
+            get { return item.Name; }
+            set { item.Name = value; }
+        }
+
+        public Device(IItem item)
+        {
+            this.item = item;
         }
     }
 }

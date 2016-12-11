@@ -8,7 +8,7 @@ namespace Itemify.Spec.Example_A.Types
         [TypeValue("temp")]
         Temperature,
 
-        [TypeValue("set-temp")]
+        [TypeValue("settemp")]
         SetTemperature,
 
         [TypeValue("bright")]

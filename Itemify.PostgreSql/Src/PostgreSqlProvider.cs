@@ -14,7 +14,7 @@ namespace Itemify.Core.PostgreSql
 {
     public interface IGloballyUniqueEntity : IEntityBase
     {
-        Guid Id { get; set; }
+        Guid Guid { get; set; }
     }
 
     public interface IDefaultEntity : IEntityBase
@@ -140,11 +140,11 @@ namespace Itemify.Core.PostgreSql
 
         public Guid Insert(string tableName, IGloballyUniqueEntity entity)
         {
-            if (entity.Id == Guid.Empty)
-                entity.Id = Guid.NewGuid();
+            if (entity.Guid == Guid.Empty)
+                entity.Guid = Guid.NewGuid();
 
             Insert(tableName, entity, true);
-            return entity.Id;
+            return entity.Guid;
         }
 
         public int Insert(string tableName, IDefaultEntity entity)
@@ -228,6 +228,11 @@ namespace Itemify.Core.PostgreSql
         //        allValues.Clear();
         //    }
         //}
+
+        public void Execute(string query, params object[] parameters)
+        {
+            db.Execute(query, parameters);
+        }
 
         public IEnumerable<TEntity> Query<TEntity>(string query, params object[] parameters)
             where TEntity : IEntityBase, new()

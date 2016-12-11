@@ -2,6 +2,7 @@
 {
     public enum PostgreSqlIndexType
     {
+        None,
         Clustered,
         Unique
     }

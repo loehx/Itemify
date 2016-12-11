@@ -12,7 +12,7 @@ namespace Itemify.Core.Typing
             if (value == null) throw new ArgumentNullException(nameof(value));
 
             if (!Regex.IsMatch(value.Value, "^[A-Za-z0-9]+$"))
-                throw new ArgumentException($"Name of {nameof(TypeDefinition)} cannot contain special characters: '{value.Value}'");
+                throw new ArgumentException($"Name of {nameof(TypeValueAttribute)} cannot contain special characters: '{value.Value}'");
 
             _value = value;
             EnumValue = enumValue;

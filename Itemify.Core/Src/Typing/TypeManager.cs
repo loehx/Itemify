@@ -4,22 +4,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Itemify.Core.Exceptions;
+using Itemify.Core.ItemAccess;
+using Itemify.Core.Utils;
 
 namespace Itemify.Core.Typing
 {
-    public static class TypeManager
+    public class TypeManager
     {
-        private static Hashtable _types = Hashtable.Synchronized(new Hashtable());
+        private Hashtable _types = Hashtable.Synchronized(new Hashtable());
 
-        public static IEnumerable<TypeDefinition> AllDefinitions => _types.Values.Cast<TypeDefinition>();
+        public TypeManager()
+        {
+            Register<DefaultTypes>();
+        }
 
-        public static void Register<T>()
+        public IEnumerable<TypeDefinition> AllDefinitions => _types.Values.Cast<TypeDefinition>();
+
+        public void Register<T>()
             where T: struct 
         {
             Register(typeof(T));
         }
 
-        public static void Register(Type type)
+        public void Register(Type type)
         {
             if (!type.IsEnum)
                 throw new ArgumentException($"Parameter {nameof(type)} must be an enum. Actual: {type}");
@@ -35,13 +42,13 @@ namespace Itemify.Core.Typing
             _types[type] = definition;
         }
 
-        public static void Reset()
+        public void Reset()
         {
             _types.Clear();
         }
 
 
-        internal static TypeDefinition GetDefinitionByType(Type type)
+        internal TypeDefinition GetDefinitionByType(Type type)
         {
             var result = _types[type] as TypeDefinition;
             if (result == null)
@@ -50,13 +57,68 @@ namespace Itemify.Core.Typing
             return result;
         }
 
-        internal static TypeDefinition GetDefinitionByName(string name)
+        internal TypeDefinition GetDefinitionByName(string name)
         {
             var result = AllDefinitions.FirstOrDefault(k => k.Name == name);
             if (result == null)
                 throw new Exception($"Type with name '{name}' is not a registered {nameof(TypeDefinition)}");
 
             return result;
+        }
+
+        public TypeItem GetTypeItem<TEnum>(TEnum type)
+        {
+            var t = typeof(TEnum);
+            if (!t.IsEnum)
+                throw new ArgumentException($"Parameter {nameof(type)} must be an enum. Actual: {t}");
+
+            var attr = t.GetCustomAttribute(typeof(TypeDefinitionAttribute)) as TypeDefinitionAttribute;
+            if (attr == null)
+                throw new MissingCustomAttribute($"Type {t} is missing a custom attribute of type {nameof(TypeDefinitionAttribute)}");
+
+            var typeValueAttribute = EnumUtil.GetCustomAttribute<TypeValueAttribute>(type);
+            if (typeValueAttribute == null)
+                throw new MissingCustomAttribute($"Parameter {nameof(type)} must have a custom attribute of type: {nameof(TypeValueAttribute)}");
+
+            var definition = GetDefinitionByType(t);
+
+            return definition.GetItemByValue(typeValueAttribute.Value);
+        }
+
+        public TypeItem ParseTypeItem(string source)
+        {
+            try
+            {
+                var spl = source.Split('=');
+                if (spl.Length != 2)
+                    throw new Exception("No seperator found (=).");
+
+                var name = spl[0];
+                var value = spl[1];
+                var definition = GetDefinitionByName(name);
+                var item = definition.GetItemByValue(value);
+
+                return item;
+            }
+            catch (Exception err)
+            {
+                throw new Exception($"Unable to parse {nameof(TypeItem)} from: '{source}'", err);
+            }
+        }
+
+        public TypeSet ParseTypeSet(string source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            var items = source.Split(new [] { '&' }, StringSplitOptions.RemoveEmptyEntries).Select(ParseTypeItem);
+            return new TypeSet(this, items);
+        }
+
+        public TypeSet GetTypeSet<TEnum>(TEnum enumValue)
+            where TEnum : struct
+        {
+            var set = new TypeSet(this);
+            set.Set(enumValue);
+            return set;
         }
     }
 }

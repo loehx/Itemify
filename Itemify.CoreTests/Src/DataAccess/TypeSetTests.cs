@@ -8,18 +8,20 @@ namespace Itemify.Spec
     [TestClass]
     public class TypeSetTests
     {
+        private TypeManager typeManager;
+
         [TestInitialize]
         public void BeforeEach()
         {
-            TypeManager.Reset();
-            TypeManager.Register<DeviceType>();
+            typeManager = new TypeManager();
+            typeManager.Register<DeviceType>();
         }
 
         [TestMethod]
         public void TypeSetTest()
         {
-            var a = TypeSet.From(DeviceType.Sensor);
-            var b = TypeSet.From(DeviceType.Meter);
+            var a = typeManager.GetTypeSet(DeviceType.Sensor);
+            var b = typeManager.GetTypeSet(DeviceType.Meter);
 
             Assert.AreNotEqual(a, b);
         }
@@ -28,16 +30,16 @@ namespace Itemify.Spec
         [ExpectedException(typeof(Exception))]
         public void TypeSetFromUnregisteredEnum()
         {
-            TypeSet.From(DeviceTypesDuplicateTypeValue.Sensor);
+            typeManager.GetTypeSet(DeviceTypesDuplicateTypeValue.Sensor);
         }
 
         [TestMethod]
         public void TypeSetSerialization()
         {
-            var set = TypeSet.From(DeviceType.Sensor);
+            var set = typeManager.GetTypeSet(DeviceType.Sensor);
             var raw = set.ToStringValue();
 
-            var actual = TypeSet.Parse(raw);
+            var actual = typeManager.ParseTypeSet(raw);
             Assert.AreEqual(set, actual);
         }
 

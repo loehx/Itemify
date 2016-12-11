@@ -112,7 +112,7 @@ namespace Itemify.Core.PostgreSql.Spec
             var id = provider.Insert(tableName, entity);
 
             Assert.IsTrue(id != Guid.Empty);
-            Assert.AreEqual(id, entity.Id);
+            Assert.AreEqual(id, entity.Guid);
 
             return entity;
         }
@@ -140,11 +140,11 @@ namespace Itemify.Core.PostgreSql.Spec
             var tableName = "table_d";
             var expected = Insert_IGloballyUniqueEntity();
 
-            var actual = provider.Query<EntityB>($"SELECT * FROM {provider.ResolveTableName("table_d")} WHERE \"Id\" = @0", expected.Id)
+            var actual = provider.Query<EntityB>($"SELECT * FROM {provider.ResolveTableName("table_d")} WHERE \"Guid\" = @0", expected.Guid)
                 .FirstOrDefault();
 
             Assert.IsNotNull(actual);
-            Assert.AreEqual(expected.Id, actual.Id);
+            Assert.AreEqual(expected.Guid, actual.Guid);
             Assert.AreEqual(expected.DateTime, actual.DateTime);
             Assert.AreEqual(expected.NullableDateTime, actual.NullableDateTime);
             Assert.AreEqual(expected.DateTimeOffset, actual.DateTimeOffset);
@@ -167,7 +167,7 @@ namespace Itemify.Core.PostgreSql.Spec
         {
             var expected = Insert_IGloballyUniqueEntity();
 
-            provider.Query<EntityB>($"SELECT \"Id\" AS GUID FROM {provider.ResolveTableName("table_d")} WHERE \"Id\" = @0", expected.Id)
+            provider.Query<EntityB>($"SELECT \"Guid\" AS GUID FROM {provider.ResolveTableName("table_d")} WHERE \"Guid\" = @0", expected.Guid)
                 .First();
         }
 
@@ -176,12 +176,12 @@ namespace Itemify.Core.PostgreSql.Spec
         {
             var expected = Insert_IGloballyUniqueEntity();
 
-            var objects = provider.Query($"SELECT * FROM {provider.ResolveTableName("table_d")} WHERE \"Id\" = @0", expected.Id)
+            var objects = provider.Query($"SELECT * FROM {provider.ResolveTableName("table_d")} WHERE \"Guid\" = @0", expected.Guid)
                 .FirstOrDefault();
 
             var pos = 0;
             Assert.IsNotNull(objects);
-            Assert.AreEqual(expected.Id, objects[pos++]);
+            Assert.AreEqual(expected.Guid, objects[pos++]);
             Assert.AreEqual(expected.DateTime, objects[pos++]);
             Assert.AreEqual(expected.NullableDateTime, objects[pos++]);
             Assert.AreNotEqual(expected.DateTimeOffset, objects[pos++], "Missing: new DateTimeOffset(DateTime.SpecifyKind((DateTime) o, DateTimeKind.Local))");
@@ -254,7 +254,7 @@ namespace Itemify.Core.PostgreSql.Spec
     public class EntityB : IGloballyUniqueEntity
     {
         [PostgreSqlColumn(primaryKey: true)]
-        public Guid Id { get; set; }
+        public Guid Guid { get; set; }
 
         [PostgreSqlColumn]
         public DateTime DateTime { get; set; }
