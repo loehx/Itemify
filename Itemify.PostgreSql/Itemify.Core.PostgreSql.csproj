@@ -47,7 +47,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Src\IPostgreSqlEntity.cs" />
-    <Compile Include="Src\Logging\DebuggingSqlLog.cs" />
+    <Compile Include="Src\Logging\ConsoleSqlLog.cs" />
     <Compile Include="Src\Logging\ISqlLog.cs" />
     <Compile Include="Src\Exceptions\MissingPropertyException.cs" />
     <Compile Include="Src\PostgreSqlColumnSchema.cs" />

@@ -2,11 +2,12 @@
 using System.Linq;
 using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Core.PostgreSql.Logging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
+using NUnit.Framework.Constraints;
 
 namespace Itemify.Core.PostgreSql.Spec
 {
-    [TestClass()]
+    [TestFixture]
     public class PostgreSqlProviderTests
     {
         private const string SCHEMA = "tests";
@@ -16,10 +17,10 @@ namespace Itemify.Core.PostgreSql.Spec
         private PostgreSqlProvider provider;
 
 
-        [TestInitialize]
+        [SetUp]
         public void BeforeEach()
         {
-            provider = new PostgreSqlProvider(connectionPool, new DebuggingSqlLog(), SCHEMA);
+            provider = new PostgreSqlProvider(connectionPool, new ConsoleSqlLog(), SCHEMA);
             provider.EnsureSchemaExists();
 
             var tables = provider.GetTableNamesBySchema(SCHEMA);
@@ -29,21 +30,21 @@ namespace Itemify.Core.PostgreSql.Spec
             }
         }
 
-        [TestCleanup]
+        [TearDown]
         public void AfterEach()
         {
             provider.Dispose();
         }
 
 
-        [TestMethod()]
+        [Test]
         public void TableExists()
         {
             var exists = provider.TableExists("not_existing_table");
             Assert.IsFalse(exists);
         }
 
-        [TestMethod()]
+        [Test]
         public void CreateTable()
         {
             var tableName = "table_a";
@@ -54,18 +55,8 @@ namespace Itemify.Core.PostgreSql.Spec
             Assert.IsTrue(exists);
         }
 
-        [TestMethod()]
-        [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
-        public void CreateTableTwice()
-        {
-            var tableName = "table_b";
-
-            provider.CreateTable<EntityA>(tableName);
-            provider.CreateTable<EntityA>(tableName); // bad
-        }
-
-        [TestMethod()]
-        public EntityA Insert_IDefaultEntity()
+        [Test]
+        public void Insert_IDefaultEntity()
         {
             var tableName = "table_c";
             var entity = new EntityA()
@@ -86,13 +77,11 @@ namespace Itemify.Core.PostgreSql.Spec
 
             Assert.IsTrue(id > 0);
             Assert.AreEqual(id, entity.Id);
-
-            return entity;
         }
 
 
-        [TestMethod()]
-        public EntityB Insert_IGloballyUniqueEntity()
+        [Test]
+        public void Insert_IGloballyUniqueEntity()
         {
             var tableName = "table_d";
             var entity = new EntityB()
@@ -113,12 +102,10 @@ namespace Itemify.Core.PostgreSql.Spec
 
             Assert.IsTrue(id != Guid.Empty);
             Assert.AreEqual(id, entity.Guid);
-
-            return entity;
         }
 
-        [TestMethod()]
-        public EntityC Insert_IAnonymousEntity()
+        [Test]
+        public void Insert_IAnonymousEntity()
         {
             var tableName = "table_e";
             var entity = new EntityC()
@@ -126,19 +113,31 @@ namespace Itemify.Core.PostgreSql.Spec
                 Name = "Anonymous item"
             };
 
-            provider.CreateTable<EntityB>(tableName);
+            provider.CreateTable<EntityC>(tableName);
 
             provider.Insert(tableName, entity);
-
-            return entity;
         }
 
 
-        [TestMethod()]
+        [Test]
         public void Query_IGloballyUniqueEntity()
         {
             var tableName = "table_d";
-            var expected = Insert_IGloballyUniqueEntity();
+            var expected = new EntityB()
+            {
+                Data = new byte[] { 0x0, 0x1, 0x2 },
+                DateTime = DateTime.MinValue,
+                DateTimeOffset = DateTimeOffset.MinValue,
+                Integer = int.MinValue,
+                NullableDateTime = DateTime.MinValue,
+                NullableInteger = int.MinValue,
+                String = new string('S', 120),
+                Varchar = new string('S', 50)
+            };
+
+            provider.CreateTable<EntityB>(tableName);
+
+            var id = provider.Insert(tableName, expected);
 
             var actual = provider.Query<EntityB>($"SELECT * FROM {provider.ResolveTableName("table_d")} WHERE \"Guid\" = @0", expected.Guid)
                 .FirstOrDefault();
@@ -148,7 +147,7 @@ namespace Itemify.Core.PostgreSql.Spec
             Assert.AreEqual(expected.DateTime, actual.DateTime);
             Assert.AreEqual(expected.NullableDateTime, actual.NullableDateTime);
             Assert.AreEqual(expected.DateTimeOffset, actual.DateTimeOffset);
-            Assert.AreNotEqual(expected.DateTimeOffset.Offset, actual.DateTimeOffset.Offset, "The offset of DateTimeOffset.MinValue cannot be saved properly."); 
+            Assert.AreNotEqual(expected.DateTimeOffset.Offset, actual.DateTimeOffset.Offset, "The offset of DateTimeOffset.MinValue cannot be saved properly.");
             Assert.AreEqual(expected.Integer, actual.Integer);
             Assert.AreEqual(expected.NullableInteger, actual.NullableInteger);
             Assert.AreEqual(expected.String, actual.String);
@@ -161,22 +160,52 @@ namespace Itemify.Core.PostgreSql.Spec
         }
 
 
-        [TestMethod()]
-        [ExpectedException(typeof(MissingPropertyException))]
+        [Test]
         public void Query_IGloballyUniqueEntity_SkippingTableResolve()
         {
-            var expected = Insert_IGloballyUniqueEntity();
+            var tableName = "table_d";
+            var expected = new EntityB()
+            {
+                Data = new byte[] { 0x0, 0x1, 0x2 },
+                DateTime = DateTime.MinValue,
+                DateTimeOffset = DateTimeOffset.MinValue,
+                Integer = int.MinValue,
+                NullableDateTime = DateTime.MinValue,
+                NullableInteger = int.MinValue,
+                String = new string('S', 120),
+                Varchar = new string('S', 50)
+            };
 
-            provider.Query<EntityB>($"SELECT \"Guid\" AS GUID FROM {provider.ResolveTableName("table_d")} WHERE \"Guid\" = @0", expected.Guid)
-                .First();
+            provider.CreateTable<EntityB>(tableName);
+            var id = provider.Insert(tableName, expected);
+
+            Assert.Throws<MissingPropertyException>(() =>
+            {
+                provider.Query<EntityB>($"SELECT \"Guid\" AS GUID FROM {provider.ResolveTableName(tableName)} WHERE \"Guid\" = @0", expected.Guid)
+                    .First();
+            });
         }
 
-        [TestMethod()]
+        [Test]
         public void Query_IGloballyUniqueEntity_NoDeserialization()
         {
-            var expected = Insert_IGloballyUniqueEntity();
+            var tableName = "table_d";
+            var expected = new EntityB()
+            {
+                Data = new byte[] { 0x0, 0x1, 0x2 },
+                DateTime = DateTime.MinValue,
+                DateTimeOffset = DateTimeOffset.MinValue,
+                Integer = int.MinValue,
+                NullableDateTime = DateTime.MinValue,
+                NullableInteger = int.MinValue,
+                String = new string('S', 120),
+                Varchar = new string('S', 50)
+            };
 
-            var objects = provider.Query($"SELECT * FROM {provider.ResolveTableName("table_d")} WHERE \"Guid\" = @0", expected.Guid)
+            provider.CreateTable<EntityB>(tableName);
+            var id = provider.Insert(tableName, expected);
+
+            var objects = provider.Query($"SELECT * FROM {provider.ResolveTableName(tableName)} WHERE \"Guid\" = @0", expected.Guid)
                 .FirstOrDefault();
 
             var pos = 0;
@@ -191,11 +220,25 @@ namespace Itemify.Core.PostgreSql.Spec
             Assert.AreEqual(expected.Varchar, objects[pos++]);
         }
 
-        [TestMethod()]
+        [Test]
         public void Query_IDefaultEntity()
         {
             var tableName = "table_c";
-            var expected = Insert_IDefaultEntity();
+            var expected = new EntityA()
+            {
+                Data = new byte[512],
+                DateTime = DateTime.Now,
+                DateTimeOffset = DateTimeOffset.Now,
+                Integer = int.MaxValue,
+                NullableDateTime = DateTime.Now,
+                NullableInteger = int.MaxValue,
+                String = new string('S', 120),
+                Varchar = new string('S', 50)
+            };
+
+            provider.CreateTable<EntityA>(tableName);
+
+            var id = provider.Insert(tableName, expected);
 
             var actual = provider.Query<EntityA>($"SELECT * FROM {provider.ResolveTableName("table_c")} WHERE \"Id\" = @0", expected.Id)
                 .FirstOrDefault();
@@ -216,11 +259,66 @@ namespace Itemify.Core.PostgreSql.Spec
                 Assert.AreEqual(expected.Data[i], actual.Data[i]);
             }
         }
+
+        [Test]
+        public void Upsert_IDefaultEntity()
+        {
+            var tableName = "table_c";
+            var firstEntity = new EntityA()
+            {
+                Data = new byte[512],
+                DateTime = DateTime.Now,
+                DateTimeOffset = DateTimeOffset.Now,
+                Integer = int.MaxValue,
+                NullableDateTime = DateTime.Now,
+                NullableInteger = int.MaxValue,
+                String = new string('S', 120),
+                Varchar = new string('S', 50)
+            };
+
+            provider.CreateTable<EntityA>(tableName);
+            var id = provider.Insert(tableName, firstEntity);
+
+            var expected = new EntityA()
+            {
+                Id = id,
+                Data = new byte[12],
+                DateTime = DateTime.Today,
+                DateTimeOffset = DateTime.Today,
+                Integer = 0,
+                NullableDateTime = null,
+                NullableInteger = 123,
+                String = null,
+                Varchar = "Test"
+            };
+
+            var id2 = provider.Insert(tableName, expected, true);
+            Assert.AreEqual(id, id2);
+
+            var actual = provider.Query<EntityA>($"SELECT * FROM {provider.ResolveTableName("table_c")} WHERE \"Id\" = @0", expected.Id)
+                .FirstOrDefault();
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(expected.Type, actual.Type);
+            Assert.IsTrue(expected.DateTime.Subtract(actual.DateTime) < TimeSpan.FromMilliseconds(1));
+            Assert.IsTrue(actual.NullableDateTime.HasValue);
+            Assert.IsFalse(expected.NullableDateTime.HasValue);
+            Assert.IsTrue(expected.DateTimeOffset.Subtract(actual.DateTimeOffset) < TimeSpan.FromMilliseconds(1));
+            Assert.AreEqual(expected.DateTimeOffset.Offset, actual.DateTimeOffset.Offset);
+            Assert.AreEqual(expected.Integer, actual.Integer);
+            Assert.AreEqual(expected.NullableInteger, actual.NullableInteger);
+            Assert.AreEqual(expected.String, actual.String);
+            Assert.AreEqual(expected.Varchar, actual.Varchar);
+            for (var i = 0; i < expected.Data.Length; i++)
+            {
+                Assert.AreEqual(expected.Data[i], actual.Data[i]);
+            }
+        }
     }
 
     public class EntityA : IDefaultEntity
     {
-        [PostgreSqlColumn(dataType: "SERIAL", primaryKey:true)]
+        [PostgreSqlColumn(dataType: "SERIAL", primaryKey: true)]
         public int Id { get; set; }
 
         [PostgreSqlColumn(name: "type")]

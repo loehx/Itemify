@@ -34,7 +34,16 @@ namespace Itemify.Core
             if (actualItem == null)
                 throw new ArgumentException($"Unknown item type: '{item.GetType().Name}'", nameof(item));
 
-            return provider.Upsert(item.Type.Name, actualItem.GetEntity());
+            return provider.Upsert(actualItem.Type.Name, actualItem.GetEntity());
+        }
+
+        public IItem GetItemByReference(IItemReference r)
+        {
+            var entity = provider.QuerySingle(r.Type.Name, r.Guid);
+            if (entity == null)
+                return null;
+
+            return new DefaultItem(entity, context);
         }
     }
 

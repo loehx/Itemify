@@ -5,10 +5,11 @@ using Itemify.Core.Item;
 using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql;
 using Itemify.Core.PostgreSql.Logging;
-using Itemify.Core.Src.PostgreSql;
 using Itemify.Core.Typing;
 using Itemify.Spec.Example_A.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
+using Assert = NUnit.Framework.Assert;
 
 namespace Itemify.Core.Spec
 {
@@ -23,10 +24,10 @@ namespace Itemify.Core.Spec
         private ItemProvider provider;
         private TypeManager typeManager;
 
-        [TestInitialize]
+        [SetUp]
         public void BeforeEach()
         {
-            sqlProvider = new PostgreSqlProvider(connectionPool, new DebuggingSqlLog(), SCHEMA);
+            sqlProvider = new PostgreSqlProvider(connectionPool, new ConsoleSqlLog(), SCHEMA);
             sqlProvider.EnsureSchemaExists();
 
             typeManager = new TypeManager();
@@ -43,14 +44,14 @@ namespace Itemify.Core.Spec
             }
         }
 
-        [TestCleanup]
+        [TearDown]
         public void AfterEach()
         {
             sqlProvider.Dispose();
         }
 
 
-        [TestMethod()]
+        [Test]
         public void RootItem()
         {
             Assert.IsNotNull(provider.Root);
@@ -61,7 +62,7 @@ namespace Itemify.Core.Spec
         }
 
 
-        [TestMethod()]
+        [Test]
         public void NewItem_A()
         {
             var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
@@ -108,7 +109,7 @@ namespace Itemify.Core.Spec
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void NewItem_B()
         {
             var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
@@ -138,7 +139,7 @@ namespace Itemify.Core.Spec
             Assert.IsTrue(item.SubTypes.IsEmpty);
         }
 
-        [TestMethod()]
+        [Test]
         public void NewItem_C()
         {
             var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
@@ -172,7 +173,7 @@ namespace Itemify.Core.Spec
             Assert.IsFalse(item.SubTypes.Contains(SensorType.Temperature));
         }
 
-        [TestMethod()]
+        [Test]
         public void NewItem_BodyA()
         {
             var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
@@ -213,30 +214,70 @@ namespace Itemify.Core.Spec
         }
 
 
-        [TestMethod()]
-        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        [Test]
         public void NewItem_BadNumberValue()
         {
             var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
 
-            item.ValueNumber = double.MinValue; // reserved by Itemify
+            Assert.Throws<ArgumentOutOfRangeException>(() => item.ValueNumber = double.MinValue); // reserved by Itemify
         }
 
-        [TestMethod()]
-        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        [Test]
         public void NewItem_BadDateValue()
         {
             var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
 
-            item.ValueDate = DateTime.MinValue; // reserved by Itemify
+            Assert.Throws<ArgumentOutOfRangeException>(() => item.ValueDate = DateTime.MinValue); // reserved by Itemify
         }
 
-        [TestMethod()]
+        [Test]
         public void SaveItem()
         {
             var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
 
-            Assert.Fail("Continue here ...");
+            item.Name = "Example";
+            item.Order = -1;
+            item.ValueDate = DateTime.MinValue.AddMilliseconds(1);
+            item.ValueNumber = 1.1;
+            item.ValueString = "string";
+
+            var id = provider.Save(item, true);
+            Assert.AreEqual(id, item.Guid);
+        }
+
+
+        [Test]
+        public void SaveAndGetItem()
+        {
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+
+            item.Name = "Example";
+            item.Order = -1;
+            item.ValueDate = DateTime.MinValue.AddMilliseconds(1);
+            item.ValueNumber = 1.1;
+            item.ValueString = "string";
+
+            var id = provider.Save(item, true);
+
+            var actual = provider.GetItemByReference(item);
+
+            Assert.AreNotEqual(Guid.Empty, actual.Guid);
+            Assert.AreEqual(id, actual.Guid);
+            Assert.AreEqual(actual.Type, typeManager.GetTypeItem(DeviceType.Meter));
+            Assert.AreEqual(actual.Children.Count, 0);
+            Assert.AreEqual(actual.Related.Count, 0);
+            Assert.AreEqual(actual.Created, item.Created);
+            Assert.AreEqual(actual.Modified, item.Modified);
+            Assert.IsFalse(actual.IsParentResolved);
+            Assert.AreEqual(actual.Debug, false);
+            Assert.AreEqual(actual.Name, "Example");
+            Assert.AreEqual(actual.Order, -1);
+            Assert.AreEqual(actual.Parent, provider.Root);
+            Assert.AreEqual(actual.Revision, 0);
+            Assert.AreEqual(actual.ValueString, "string");
+            Assert.AreEqual(actual.ValueNumber, 1.1);
+            Assert.AreEqual(actual.ValueDate, DateTime.MinValue.AddMilliseconds(1));
+            Assert.IsTrue(actual.SubTypes.IsEmpty);
         }
     }
 }

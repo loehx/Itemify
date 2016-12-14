@@ -47,12 +47,6 @@ namespace Itemify.Core.Item
             set { entity.Type = value.ToStringValue(); }
         }
 
-        public string ParentType
-        {
-            get { return entity.ParentType; }
-            set { entity.ParentType = value; }
-        }
-
         public string Name
         {
             get { return string.IsNullOrEmpty(entity.Name) ? null : entity.Name; }
@@ -127,6 +121,17 @@ namespace Itemify.Core.Item
         {
             if (subTypes != null)
                 entity.SubTypes = subTypes.ToStringValue();
+
+            entity.ParentGuid = parent.Guid;
+            entity.ParentType = parent.Type.ToStringValue();
+
+            var now = DateTime.Now;
+            now = new DateTime(now.Ticks - (now.Ticks % TimeSpan.TicksPerMillisecond)); // cut off ticks
+
+            if (entity.Created == DateTime.MinValue)
+                entity.Created = now;
+
+            entity.Modified = now;
 
             return entity;
         }

@@ -79,10 +79,19 @@ namespace Itemify.Core.PostgreSql
                 sql.WriteTabbedLine(1, $"{columnName} {columnType}{columnNotNull},");
             }
 
-            sql.TrimEndLineBreaks()
-                .TrimEnd(',')
-                .NewLine()
-                .WriteLine(")");
+            var pk = columns.SingleOrDefault(k => k.PrimaryKey);
+            if (pk != null)
+            {
+                sql.WriteTabbedLine(1, $"PRIMARY KEY(\"{pk.Name}\")");
+            }
+            else
+            {
+                sql.TrimEndLineBreaks()
+                    .TrimEnd(',')
+                    .NewLine();
+            }
+
+            sql.WriteLine(")");
 
             return db.Execute(sql.ToString()) > 0;
         }
@@ -130,31 +139,41 @@ namespace Itemify.Core.PostgreSql
 
         public string ResolveTableName(string tableName)
         {
+            if (tableName.StartsWith($"\"{Schema}\"."))
+                return tableName;
+
             return $"\"{Schema}\".\"{tableName}\"";
         }
 
         public void Insert(string tableName, IAnonymousEntity entity)
         {
-            Insert(tableName, entity, true);
+            Insert(tableName, entity, true, false);
         }
 
-        public Guid Insert(string tableName, IGloballyUniqueEntity entity)
+        public Guid Insert(string tableName, IGloballyUniqueEntity entity, bool upsert = false)
         {
             if (entity.Guid == Guid.Empty)
                 entity.Guid = Guid.NewGuid();
 
-            Insert(tableName, entity, true);
+            var guid = Insert(tableName, entity, true, upsert);
+            if (guid != null)
+                entity.Guid = (Guid)guid;
+
             return entity.Guid;
         }
 
-        public int Insert(string tableName, IDefaultEntity entity)
+        public int Insert(string tableName, IDefaultEntity entity, bool upsert = false)
         {
             var insertPrimaryKey = entity.Id != default(int);
-            entity.Id = (int)Insert(tableName, entity, insertPrimaryKey);
+
+            var id = Insert(tableName, entity, insertPrimaryKey, upsert);
+            if (id != null)
+                entity.Id = (int)id;
+
             return entity.Id;
         }
 
-        private object Insert(string tableName, IEntityBase entity, bool insertPrimaryKey)
+        private object Insert(string tableName, IEntityBase entity, bool insertPrimaryKey, bool upsert)
         {
             var type = entity.GetType();
             var columns = ReflectionUtil.GetColumnSchemas(type);
@@ -168,10 +187,12 @@ namespace Itemify.Core.PostgreSql
             foreach (var column in columns)
             {
                 // don't insert PK if specified
-                if (!insertPrimaryKey && column.PrimaryKey)
+                if (column.PrimaryKey)
                 {
                     pk = column;
-                    continue;
+
+                    if (!insertPrimaryKey)
+                        continue;
                 }
 
                 var value = column.GetValue(entity);
@@ -183,14 +204,27 @@ namespace Itemify.Core.PostgreSql
                 valuePlaceholders.Add("@" + pos++);
                 values.Add(value);
             }
-            
+
             query.Write($"INSERT INTO ")
                 .WriteLine(ResolveTableName(tableName))
                 .WriteTabbedLine(1, $"({string.Join(", ", columnNames)})")
                 .WriteTabbedLine(1, $"VALUES ({string.Join(", ", valuePlaceholders)})");
 
+            if (upsert && pk != null)
+            {
+                query.WriteTabbedLine(2, "ON CONFLICT (\"" + pk.Name + "\") DO UPDATE SET ");
+                for (var i = 0; i < valuePlaceholders.Count; i++)
+                {
+                    query.WriteTabbed(3, columnNames[i])
+                        .Write(" = ")
+                        .Write(valuePlaceholders[i])
+                        .WriteIf(i < valuePlaceholders.Count - 1, ",")
+                        .NewLine();
+                }
+            }
+
             if (!insertPrimaryKey && pk != null)
-            {   
+            {
                 query.WriteTabbedLine(2, "RETURNING \"" + pk.Name + '"');
             }
 
@@ -253,7 +287,7 @@ namespace Itemify.Core.PostgreSql
                 throw new ArgumentNullException(nameof(query));
 
             Debug.Assert(query.Contains("@" + (parameters.Length - 1)), "Query should contain exactly " + parameters.Length + " placeholders like @0, @1, ...");
-   
+
             var type = typeof(TEntity);
 
             using (var reader = db.Query(query, parameters))
@@ -317,7 +351,7 @@ namespace Itemify.Core.PostgreSql
             for (var i = 0; i < reader.VisibleFieldCount; i++)
                 columns[i] = reader.GetName(i);
 
-            StringCollection a; 
+            StringCollection a;
 
             return columns;
         }

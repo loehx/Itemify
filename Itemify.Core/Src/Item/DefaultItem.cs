@@ -1,4 +1,5 @@
 ﻿using System;
+using Itemify.Core.ItemAccess;
 using Itemify.Core.ItemAccess.Entities;
 using Itemify.Core.Typing;
 
@@ -11,6 +12,11 @@ namespace Itemify.Core.Item
         {
             Guid = newGuid;
             Type = type;
+        }
+
+        public DefaultItem(ItemEntity entity, ItemContext context)
+            : base(context, entity, new ItemReference(entity.ParentGuid, context.TypeManager.ParseTypeItem(entity.ParentType)))
+        {
         }
     }
 }

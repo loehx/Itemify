@@ -5,40 +5,40 @@ using Itemify.Core.PostgreSql.Util;
 
 namespace Itemify.Core.PostgreSql.Logging
 {
-    public class DebuggingSqlLog : ISqlLog
+    public class ConsoleSqlLog : ISqlLog
     {
         public void New(string title)
         {
-            Debug.WriteLine(" ");
-            Debug.WriteLine("===== SQL LOG: " + title + " " + new string('=', 80 - title.Length));
-            Debug.WriteLine(" ");
+            Console.WriteLine(" ");
+            Console.WriteLine("===== SQL LOG: " + title + " " + new string('=', 80 - title.Length));
+            Console.WriteLine(" ");
         }
 
         public void WriteSql(string sql, object[] parameters)
         {
-            Debug.WriteLine(sql.Trim(' ', '\n'));
-            Debug.WriteLine(" ");
+            Console.WriteLine(sql.Trim(' ', '\n'));
+            Console.WriteLine(" ");
 
             if (parameters.Length > 0)
             {
                 for (var i = 0; i < parameters.Length; i++)
                 {
                     var p = parameters[i];
-                    Debug.WriteLine($"    [{i}] => {SqlUtil.ToSql(p)}");
+                    Console.WriteLine($"    [{i}] => {SqlUtil.ToSql(p)}");
                 }
-                Debug.WriteLine(" ");
+                Console.WriteLine(" ");
             }
         }
 
         public void Failed(Exception err)
         {
-            Debug.WriteLine(err.ToString());
+            Console.WriteLine(err.ToString());
         }
 
         public void Completed(long elapsedMilliseconds)
         {
-            Debug.WriteLine("--> took " + elapsedMilliseconds.ToString("N", CultureInfo.InvariantCulture) + " ms.");
-            Debug.WriteLine(" ");
+            Console.WriteLine("--> took " + elapsedMilliseconds.ToString("N", CultureInfo.InvariantCulture) + " ms.");
+            Console.WriteLine(" ");
         }
     }
 }

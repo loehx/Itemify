@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Itemify.Core.ItemAccess.Entities;
-using Itemify.Core.Src.PostgreSql;
 
 namespace Itemify.Core.PostgreSql
 {
@@ -20,7 +19,8 @@ namespace Itemify.Core.PostgreSql
 
         public Guid Upsert(string tableName, ItemEntity entity)
         {
-            throw new NotImplementedException();
+            tableName = resolveTable(tableName);
+            return postgreSql.Insert(tableName, entity, true);
         }
 
         public void Delete(string tableName, Guid guid)
@@ -32,13 +32,13 @@ namespace Itemify.Core.PostgreSql
         public IEnumerable<ItemEntity> QueryMulti(string tableName, Guid guid)
         {
             tableName = resolveTable(tableName);
-            return postgreSql.Query<ItemEntity>("SELECT * FROM " + tableName + " WHERE \"guid\" = @0", guid);
+            return postgreSql.Query<ItemEntity>("SELECT * FROM " + tableName + " WHERE \"Guid\" = @0", guid);
         }
 
         public ItemEntity QuerySingle(string tableName, Guid guid)
         {
             tableName = resolveTable(tableName);
-            return postgreSql.Query<ItemEntity>("SELECT * FROM " + tableName + " WHERE \"guid\" = @0", guid).FirstOrDefault();
+            return postgreSql.Query<ItemEntity>("SELECT * FROM " + tableName + " WHERE \"Guid\" = @0", guid).FirstOrDefault();
         }
 
 
@@ -48,6 +48,8 @@ namespace Itemify.Core.PostgreSql
 
             if (!tables.Contains(tableName))
             {
+                tables.Add(tableName);
+
                 if (!postgreSql.TableExists(tableName))
                 {
                     log.CreateTable(tableName);
