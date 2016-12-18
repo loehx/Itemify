@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Itemify.Core.PostgreSql.Exceptions;
-using Itemify.Core.PostgreSql.Logging;
+using Itemify.Logging;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 
@@ -20,7 +20,11 @@ namespace Itemify.Core.PostgreSql.Spec
         [SetUp]
         public void BeforeEach()
         {
-            provider = new PostgreSqlProvider(connectionPool, new ConsoleSqlLog(), SCHEMA);
+            var log = new DebugLogData();
+            var logwriter = new RegionBasedLogWriter(log, nameof(PostgreSqlProviderTests), 0);
+            logwriter.StartStopwatch();
+
+            provider = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
             provider.EnsureSchemaExists();
 
             var tables = provider.GetTableNamesBySchema(SCHEMA);
@@ -261,7 +265,7 @@ namespace Itemify.Core.PostgreSql.Spec
         }
 
         [Test]
-        public void Upsert_IDefaultEntity()
+        public void Upsert_IDefaultEntity_NoMerge()
         {
             var tableName = "table_c";
             var firstEntity = new EntityA()
@@ -292,16 +296,16 @@ namespace Itemify.Core.PostgreSql.Spec
                 Varchar = "Test"
             };
 
-            var id2 = provider.Insert(tableName, expected, true);
+            var id2 = provider.Insert(tableName, expected, upsert: true, merge: false);
             Assert.AreEqual(id, id2);
 
             var actual = provider.Query<EntityA>($"SELECT * FROM {provider.ResolveTableName("table_c")} WHERE \"Id\" = @0", expected.Id)
                 .FirstOrDefault();
 
             Assert.IsNotNull(actual);
-            Assert.AreEqual(expected.Type, actual.Type);
+            Assert.AreEqual(expected.Type, actual.Type); 
             Assert.IsTrue(expected.DateTime.Subtract(actual.DateTime) < TimeSpan.FromMilliseconds(1));
-            Assert.IsTrue(actual.NullableDateTime.HasValue);
+            Assert.IsFalse(actual.NullableDateTime.HasValue);
             Assert.IsFalse(expected.NullableDateTime.HasValue);
             Assert.IsTrue(expected.DateTimeOffset.Subtract(actual.DateTimeOffset) < TimeSpan.FromMilliseconds(1));
             Assert.AreEqual(expected.DateTimeOffset.Offset, actual.DateTimeOffset.Offset);
@@ -313,6 +317,46 @@ namespace Itemify.Core.PostgreSql.Spec
             {
                 Assert.AreEqual(expected.Data[i], actual.Data[i]);
             }
+        }
+
+
+        [Test]
+        public void Upsert_IDefaultEntity_Merge()
+        {
+            var tableName = "table_c";
+            var firstEntity = new EntityA()
+            {
+                Data = new byte[512],
+                NullableDateTime = DateTime.Now,
+                NullableInteger = int.MaxValue,
+                String = new string('S', 120),
+                Varchar = new string('S', 50)
+            };
+
+            provider.CreateTable<EntityA>(tableName);
+            var id = provider.Insert(tableName, firstEntity);
+
+            var expected = new EntityA()
+            {
+                Id = id,
+                Data = null,
+                NullableDateTime = null,
+                NullableInteger = null,
+                String = null,
+                Varchar = null
+            };
+
+            provider.Insert(tableName, expected, upsert: true, merge: true); // merge = true
+            var actual = provider.Query<EntityA>($"SELECT * FROM {provider.ResolveTableName("table_c")} WHERE \"Id\" = @0", expected.Id)
+                .FirstOrDefault();
+
+            Assert.AreEqual(firstEntity.Type, actual.Type);
+            Assert.IsTrue(firstEntity.DateTime.Subtract(actual.DateTime) < TimeSpan.FromMilliseconds(1));
+            Assert.IsTrue(actual.NullableDateTime.HasValue);
+            Assert.IsTrue(firstEntity.NullableDateTime.HasValue);
+            Assert.AreEqual(firstEntity.NullableInteger, actual.NullableInteger);
+            Assert.AreEqual(firstEntity.String, actual.String);
+            Assert.AreEqual(firstEntity.Varchar, actual.Varchar);
         }
     }
 

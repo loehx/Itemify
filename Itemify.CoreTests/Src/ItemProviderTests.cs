@@ -4,8 +4,9 @@ using System.Linq;
 using Itemify.Core.Item;
 using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql;
-using Itemify.Core.PostgreSql.Logging;
 using Itemify.Core.Typing;
+using Itemify.Logging;
+using Itemify.Shared.Logging;
 using Itemify.Spec.Example_A.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NUnit.Framework;
@@ -27,15 +28,17 @@ namespace Itemify.Core.Spec
         [SetUp]
         public void BeforeEach()
         {
-            sqlProvider = new PostgreSqlProvider(connectionPool, new ConsoleSqlLog(), SCHEMA);
+            var log = new DebugLogData();
+            var logwriter = new RegionBasedLogWriter(log, nameof(ItemProviderTests), 0);
+            sqlProvider = new PostgreSqlProvider(connectionPool, logwriter.NewRegion(nameof(PostgreSqlProvider)), SCHEMA);
             sqlProvider.EnsureSchemaExists();
 
             typeManager = new TypeManager();
             typeManager.Register<DeviceType>();
             typeManager.Register<SensorType>();
 
-            entityProvider = new EntityProvider(sqlProvider, new EntityProviderLog(s => Console.WriteLine("[EntityProvider] " + s)));
-            provider = new ItemProvider(entityProvider, typeManager);
+            entityProvider = new EntityProvider(sqlProvider, logwriter.NewRegion(nameof(EntityProvider)));
+            provider = new ItemProvider(entityProvider, typeManager, logwriter);
 
             var tables = sqlProvider.GetTableNamesBySchema(SCHEMA);
             foreach (var table in tables)

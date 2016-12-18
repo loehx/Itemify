@@ -6,35 +6,17 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using Itemify.Core.PostgreSql.Exceptions;
-using Itemify.Core.PostgreSql.Logging;
 using Itemify.Core.PostgreSql.Util;
+using Itemify.Shared.Logging;
 using Npgsql;
 
 namespace Itemify.Core.PostgreSql
 {
-    public interface IGloballyUniqueEntity : IEntityBase
-    {
-        Guid Guid { get; set; }
-    }
-
-    public interface IDefaultEntity : IEntityBase
-    {
-        int Id { get; set; }
-    }
-
-    public interface IAnonymousEntity : IEntityBase
-    {
-        // no id
-    }
-
-    public interface IEntityBase
-    {
-    }
-
     public class PostgreSqlProvider : IDisposable
     {
         private PostgreSqlConnectionContext context;
         private readonly PostgreSqlDatabase db;
+        private readonly ILogWriter log;
         private readonly string schema;
 
         public const string TABLE_PLACEHOLDER = "{table}";
@@ -42,11 +24,12 @@ namespace Itemify.Core.PostgreSql
         public string Schema => schema;
         public int ConnectionId => context.ConnectionId;
 
-        public PostgreSqlProvider(PostgreSqlConnectionPool connectionPool, ISqlLog log, string schema = "public")
+        public PostgreSqlProvider(PostgreSqlConnectionPool connectionPool, ILogWriter log, string schema = "public")
         {
+            this.log = log;
             this.schema = schema;
             context = connectionPool.GetContext();
-            db = new PostgreSqlDatabase(context, log);
+            db = new PostgreSqlDatabase(context, log.NewRegion(nameof(PostgreSqlDatabase)));
         }
 
         public void EnsureSchemaExists()
@@ -98,28 +81,28 @@ namespace Itemify.Core.PostgreSql
 
         public bool TableExists(string tableName)
         {
-            var sql = @"SELECT EXISTS (SELECT 1
-                   FROM   information_schema.tables 
-                   WHERE  table_schema = '{0}'
-                   AND    table_name = '{1}'
-                );";
+            var sql = new StringBuilder();
 
-            sql = string.Format(sql, Schema, tableName);
-
-            var result = db.QuerySingleValue(sql);
+            sql.AppendLine(@"SELECT EXISTS (SELECT 1");
+            sql.AppendLine("    FROM   information_schema.tables");
+            sql.AppendFormat("    WHERE  table_schema = '{0}'", Schema).AppendLine();
+            sql.AppendFormat("    AND    table_name = '{0}'", tableName).AppendLine();
+            sql.AppendLine(");");
+            
+            var result = db.QuerySingleValue(sql.ToString());
             return true.Equals(result);
         }
 
         public ICollection<string> GetTableNamesBySchema(string schema)
         {
             var result = new List<string>();
-            var sql = @"SELECT table_name
-                   FROM   information_schema.tables 
-                   WHERE  table_schema = '{0}'";
+            var sql = new StringBuilder();
 
-            sql = string.Format(sql, schema);
+            sql.AppendLine(@"SELECT table_name");
+            sql.AppendLine("    FROM   information_schema.tables");
+            sql.AppendFormat("    WHERE  table_schema = '{0}'", schema).AppendLine();
 
-            using (var reader = db.Query(sql))
+            using (var reader = db.Query(sql.ToString()))
             {
                 while (reader.Read())
                 {
@@ -145,35 +128,41 @@ namespace Itemify.Core.PostgreSql
             return $"\"{Schema}\".\"{tableName}\"";
         }
 
-        public void Insert(string tableName, IAnonymousEntity entity)
+        public void Insert(string tableName, IAnonymousEntity entity, bool merge = true)
         {
-            Insert(tableName, entity, true, false);
+            log.Describe($"Insert {nameof(IAnonymousEntity)} into table: '{tableName}' ({nameof(merge)}: {merge})", entity);
+
+            Insert(tableName, entity, true, false, merge);
         }
 
-        public Guid Insert(string tableName, IGloballyUniqueEntity entity, bool upsert = false)
+        public Guid Insert(string tableName, IGloballyUniqueEntity entity, bool upsert = false, bool merge = true)
         {
+            log.Describe($"Insert {nameof(IGloballyUniqueEntity)} into table: '{tableName}' ({nameof(upsert)}: {upsert}, {nameof(merge)}: {merge})", entity);
+
             if (entity.Guid == Guid.Empty)
                 entity.Guid = Guid.NewGuid();
 
-            var guid = Insert(tableName, entity, true, upsert);
+            var guid = Insert(tableName, entity, true, upsert, merge);
             if (guid != null)
                 entity.Guid = (Guid)guid;
 
             return entity.Guid;
         }
 
-        public int Insert(string tableName, IDefaultEntity entity, bool upsert = false)
+        public int Insert(string tableName, IDefaultEntity entity, bool upsert = false, bool merge = true)
         {
+            log.Describe($"Insert {nameof(IDefaultEntity)} into table: '{tableName}' ({nameof(upsert)}: {upsert}, {nameof(merge)}: {merge})", entity);
+
             var insertPrimaryKey = entity.Id != default(int);
 
-            var id = Insert(tableName, entity, insertPrimaryKey, upsert);
+            var id = Insert(tableName, entity, insertPrimaryKey, upsert, merge);
             if (id != null)
                 entity.Id = (int)id;
 
             return entity.Id;
         }
 
-        private object Insert(string tableName, IEntityBase entity, bool insertPrimaryKey, bool upsert)
+        private object Insert(string tableName, IEntityBase entity, bool insertPrimaryKey, bool upsert, bool merge)
         {
             var type = entity.GetType();
             var columns = ReflectionUtil.GetColumnSchemas(type);
@@ -196,8 +185,9 @@ namespace Itemify.Core.PostgreSql
                 }
 
                 var value = column.GetValue(entity);
+                var defaultValue = value?.GetType().GetDefault();
 
-                if (column.Nullable && value == null)
+                if (column.Nullable && (merge && value == defaultValue))
                     continue;
 
                 columnNames.Add('"' + column.Name + '"');
@@ -232,37 +222,6 @@ namespace Itemify.Core.PostgreSql
             return result;
         }
 
-        //public void Insert<TEntity>(string tableName, IEnumerable<TEntity> entities)
-        //    where TEntity: IEntityBase
-        //{
-        //    const int bulkSize = 100; // TODO: Find out best bulk size for insertion
-        //    var type = typeof(TEntity);
-        //    var properties = type.GetProperties()
-        //        .Where(k => k.GetCustomAttribute<PostgreSqlColumnAttribute>() != null)
-        //        .ToArray();
-        //    var columns = properties.Select(k => k.Name).ToArray();
-        //    var query = new StringBuilder(1024);
-        //    var valuePattern = "(" + string.Join(", ", 0.EnumerateTo(columns.Length - 1).Select((i) => "@{" + i + "}")) + ")\n";
-        //    var allValues = new List<object>(columns.Length);
-
-        //    foreach (var chunk in entities.Chunked(bulkSize))
-        //    {
-        //        query.Append($"INSERT INTO \"{Schema}\".\"{tableName}\" ([{string.Join("], [", columns)}]) VALUES\n");
-
-        //        foreach (var entity in entities)
-        //        {
-        //            var values = properties.Select(k => k.GetValue(entity));
-        //            query.AppendFormat(valuePattern, 0.EnumerateTo(columns.Length - 1).Select(i => i + allValues.Count));
-
-        //            allValues.AddRange(values);
-        //        }
-
-        //        db.Execute(query.ToString(), allValues);
-        //        query.Clear();
-        //        allValues.Clear();
-        //    }
-        //}
-
         public void Execute(string query, params object[] parameters)
         {
             db.Execute(query, parameters);
@@ -272,12 +231,6 @@ namespace Itemify.Core.PostgreSql
             where TEntity : IEntityBase, new()
         {
             return query<TEntity>(query, parameters);
-        }
-
-        public IEnumerable<TEntity> Query<TEntity>(string query, Expression<Func<TEntity, bool>> predicate)
-            where TEntity : IEntityBase, new()
-        {
-            return Enumerable.Empty<TEntity>();
         }
 
         private IEnumerable<TEntity> query<TEntity>(string query, params object[] parameters)

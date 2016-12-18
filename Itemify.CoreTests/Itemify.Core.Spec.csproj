@@ -73,6 +73,14 @@
       <Project>{5F954A9C-7F1B-4227-870B-53772A2C056E}</Project>
       <Name>Itemify.Core.PostgreSql</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Itemify.Shared\Itemify.Shared.csproj">
+      <Project>{68CA05BE-C5EB-4A81-9B55-54F00D152565}</Project>
+      <Name>Itemify.Shared</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Itemify\Itemify.csproj">
+      <Project>{948C0222-8922-4B99-B815-D8C0CB83405A}</Project>
+      <Name>Itemify</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

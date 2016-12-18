@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Reflection;
 using Itemify.Core.Exceptions;
-using Itemify.Core.Utils;
 
 namespace Itemify.Core.Typing
 {

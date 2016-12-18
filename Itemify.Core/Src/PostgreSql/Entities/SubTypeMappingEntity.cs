@@ -1,7 +1,6 @@
 ﻿using System;
-using Itemify.Core.PostgreSql;
 
-namespace Itemify.Core.ItemAccess.Entities
+namespace Itemify.Core.PostgreSql.Entities
 {
     class SubTypeMappingEntity : IAnonymousEntity
     {

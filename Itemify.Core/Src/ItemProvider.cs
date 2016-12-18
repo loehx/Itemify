@@ -3,19 +3,22 @@ using Itemify.Core.Item;
 using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql;
 using Itemify.Core.Typing;
+using Itemify.Shared.Logging;
 
 namespace Itemify.Core
 {
     public class ItemProvider
     {
         private readonly EntityProvider provider;
+        private readonly ILogWriter log;
         private readonly ItemContext context;
 
         public IItemReference Root => new ItemReference(Guid.Empty, context.TypeManager.GetTypeItem(DefaultTypes.Root));
 
-        internal ItemProvider(EntityProvider provider, TypeManager typeManager)
+        internal ItemProvider(EntityProvider provider, TypeManager typeManager, ILogWriter log)
         {
             this.provider = provider;
+            this.log = log;
             this.context = new ItemContext(typeManager);
         }
 

@@ -2,18 +2,18 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Itemify.Core.PostgreSql.Logging;
+using Itemify.Shared.Logging;
 using Npgsql;
 
 namespace Itemify.Core.PostgreSql
 {
     internal class PostgreSqlDatabase : IDisposable
     {
-        private readonly ISqlLog log;
+        private readonly ILogWriter log;
         private NpgsqlConnection connection;
 
 
-        public PostgreSqlDatabase(PostgreSqlConnectionContext context, ISqlLog log)
+        public PostgreSqlDatabase(PostgreSqlConnectionContext context, ILogWriter log)
         {
             this.log = log;
             connection = context.Connection;
@@ -30,8 +30,8 @@ namespace Itemify.Core.PostgreSql
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            log.New(nameof(Execute));
-            log.WriteSql(sql, parameters);
+            log.Describe(nameof(Execute));
+            log.Describe(sql, parameters);
 
             try
             {
@@ -48,12 +48,12 @@ namespace Itemify.Core.PostgreSql
             }
             catch (Exception err)
             {
-                log.Failed(err);
+                log.Describe(err);
                 throw err;
             }
             finally
             {
-                log.Completed(stopwatch.ElapsedMilliseconds);
+                log.Describe("Execute complete");
             }
         }
 
@@ -68,8 +68,8 @@ namespace Itemify.Core.PostgreSql
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            log.New(nameof(Query));
-            log.WriteSql(sql, parameters);
+            log.Describe(nameof(Query));
+            log.Describe(sql, parameters);
 
             try
             {
@@ -87,12 +87,12 @@ namespace Itemify.Core.PostgreSql
             }
             catch (Exception err)
             {
-                log.Failed(err);
+                log.Describe(err);
                 throw err;
             }
             finally
             {
-                log.Completed(stopwatch.ElapsedMilliseconds);
+                log.Describe("Query complete");
             }
         }
 
@@ -101,12 +101,7 @@ namespace Itemify.Core.PostgreSql
             for (int i = 0; i < parameters.Length; i++)
             {
                 var p = parameters[i];
-                cmd.Parameters.AddWithValue("@" + i, p);
-            }
-
-            foreach (var parameter in parameters)
-            {
-                cmd.Parameters.AddWithValue(PrepareValue(parameter));
+                cmd.Parameters.AddWithValue("@" + i, p ?? DBNull.Value);
             }
         }
 
@@ -121,8 +116,8 @@ namespace Itemify.Core.PostgreSql
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            log.New(nameof(QuerySingleValue));
-            log.WriteSql(sql, parameters);
+            log.Describe(nameof(QuerySingleValue));
+            log.Describe(sql, parameters);
 
             try
             {
@@ -136,22 +131,21 @@ namespace Itemify.Core.PostgreSql
                 if (parameters.Length > 0)
                     appendParameters(parameters, cmd);
 
-                return cmd.ExecuteScalar();
+                var result = cmd.ExecuteScalar();
+
+                log.Describe("Query single value successful.", result);
+
+                return result;
             }
             catch (Exception err)
             {
-                log.Failed(err);
+                log.Describe(err);
                 throw err;
             }
             finally
             {
-                log.Completed(stopwatch.ElapsedMilliseconds);
+                log.Describe("QuerySingleValue complete");
             }
-        }
-
-        public static object PrepareValue(object value)
-        {
-            return value;
         }
 
         public void Dispose()

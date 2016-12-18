@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using Itemify.Core.PostgreSql;
 
-namespace Itemify.Core.ItemAccess.Entities
+namespace Itemify.Core.PostgreSql.Entities
 {
 
     internal class ItemEntity : IGloballyUniqueEntity

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Itemify.Core.Exceptions;
 using Itemify.Core.ItemAccess;
-using Itemify.Core.Utils;
+using Lustitia.Utils;
 
 namespace Itemify.Core.Typing
 {

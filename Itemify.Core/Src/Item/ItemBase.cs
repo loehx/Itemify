@@ -1,8 +1,8 @@
 ﻿using System;
-using Itemify.Core.ItemAccess.Entities;
 using Itemify.Core.Keywording;
+using Itemify.Core.PostgreSql.Entities;
 using Itemify.Core.Typing;
-using Itemify.Core.Utils;
+using Itemify.Shared.Utils;
 
 namespace Itemify.Core.Item
 {

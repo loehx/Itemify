@@ -2,41 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
-namespace Itemify.Core.Utils
+// ReSharper disable once CheckNamespace
+namespace Lustitia.Utils
 {
     public static class EnumerableExtensions
     {
-        public static IEnumerable<Tuple<TA, TB>> InnerJoin<TA, TB>(this IEnumerable<TA> sourceA, IEnumerable<TB> sourceB)
-        {
-            using (var eA = sourceA.GetEnumerator())
-            using (var eB = sourceB.GetEnumerator())
-            {
-                while (eA.MoveNext() && eB.MoveNext())
-                {
-                    yield return Tuple.Create(eA.Current, eB.Current);
-                }
-            }
-        }
-
-        public static IEnumerable<Tuple<TA, TB>> OuterJoin<TA, TB>(this IEnumerable<TA> sourceA, IEnumerable<TB> sourceB)
-        {
-            using (var eA = sourceA.GetEnumerator())
-            using (var eB = sourceB.GetEnumerator())
-            {
-                var eAOk = false;
-                var eBOk = false;
-
-                while ((eAOk = eA.MoveNext()) && (eBOk = eB.MoveNext()))
-                {
-                    yield return Tuple.Create(
-                        eAOk ? eA.Current : default(TA),
-                        eBOk ? eB.Current : default(TB));
-                }
-            }
-        }
-
-
         public static void ForEach<T>(this IEnumerable<T> source, Action<T> func)
         {
             foreach (var item in source)
@@ -72,11 +44,11 @@ namespace Itemify.Core.Utils
         public static void ForEach<T>(this IEnumerable<T> source, Action<T, T, T> func)
         {
             ForEach(source, 3, a => func(a[0], a[1], a[2]));
-        }
+        } 
 
         public static void ForEach<T>(this IEnumerable<T> source, int chunkSize, Action<T[]> func)
         {
-            var items = new T[chunkSize];
+           var items = new T[chunkSize];
             var i = 0;
             var e = source.GetEnumerator();
 
@@ -100,7 +72,7 @@ namespace Itemify.Core.Utils
 
                 func(items);
             }
-        }
+        } 
 
         public static IEnumerable<T> ByTheWay<T, T2>(this IEnumerable<T> source, Action<T, T2> action, T2 obj)
         {
@@ -126,18 +98,44 @@ namespace Itemify.Core.Utils
             return ToList(source, factory);
         }
 
-        public static List<T2> ToList<T, T2>(this ICollection<T> source, Func<T, T2> factory)
+        public static List<T> List<T>(this IEnumerable<T> source)
         {
-            var result = new List<T2>(source.Count);
-            result.AddRange(source.Select(factory));
-            return result;
+            return source as List<T> ?? source.ToList();
         }
 
-        public static List<T2> ToList<T, T2>(this IEnumerable<T> source, Func<T, T2> factory)
+        public static T[] Array<T>(this IEnumerable<T> source)
         {
-            var collection = source as ICollection<T>;
+            return source as T[] ?? source.ToArray();
+        }
+
+        public static TResult[] ToArray<T, TResult>(this IEnumerable<T> source, Func<T, TResult> func)
+        {
+            var array = source as IReadOnlyList<T>;
+            if (array != null)
+            {
+                var result = new TResult[array.Count];
+
+                for (var i = 0; i < array.Count; i++)
+                    result[i] = func(array[i]);
+                
+                return result;
+            }
+
+            return source.Select(func).ToArray();
+        }
+
+        public static List<TResult> ToList<T, TResult>(this IEnumerable<T> source, Func<T, TResult> factory)
+        {
+            var collection = source as IReadOnlyList<T>;
             if (collection != null)
-                return collection.ToList(factory);
+            {
+                var result = new List<TResult>(collection.Count);
+
+                foreach (var item in collection)
+                    result.Add(factory(item));
+                
+                return result;
+            }
 
             return source.Select(factory).ToList();
         }
@@ -145,6 +143,29 @@ namespace Itemify.Core.Utils
         public static IEnumerable<T> Times<T>(this int count, Func<int, T> factory)
         {
             return count.Times().Select(factory);
+        }
+
+        public static Task<T[]> TimesAsync<T>(this int count, Func<int, T> factory)
+        {
+            var tasks = count.Times().Select(async i =>
+            {
+                
+                await Task.Yield();
+                return factory(i);
+            }).Array();
+
+            return Task.WhenAll(tasks);
+        }
+
+        public static Task<T[]> TimesAsync<T>(this int count, Func<int, Task<T>> factory)
+        {
+            var tasks = count.Times().Select(async i =>
+            {
+                await Task.Yield();
+                return await factory(i);
+            }).Array();
+
+            return Task.WhenAll(tasks);
         }
 
         public static IEnumerable<int> Times(this int count)
@@ -160,24 +181,24 @@ namespace Itemify.Core.Utils
             return source;
         }
 
-
-        public static IEnumerable<Tuple<T, T>> GroupByTuples<T>(this IEnumerable<T> source)
+        public static IEnumerable<T> Except<T>(this IEnumerable<T> source, IEnumerable<T> target, Func<T, T, bool> pred, Func<T, int> hash)
         {
-            var first = true;
-            var previous = default(T);
-            foreach (var entry in source)
-            {
-                if (first)
-                {
-                    previous = entry;
-                    first = false;
-                    continue;
-                }
+            return source.Except(target, new Itemify.Shared.Utils.EqualityComparer<T>(pred, hash));
+        }
 
-                yield return new Tuple<T, T>(previous, entry);
+        public static IEnumerable<T> Except<T>(this IEnumerable<T> source, IEnumerable<T> target, Func<T, int> hash)
+        {
+            return source.Except(target, new Itemify.Shared.Utils.EqualityComparer<T>((a, b) => hash(a) == hash(b), hash));
+        }
 
-                previous = entry;
-            }
+        public static IEnumerable<T> Intersect<T>(this IEnumerable<T> source, IEnumerable<T> target, Func<T, T, bool> pred, Func<T, int> hash)
+        {
+            return source.Intersect(target, new Itemify.Shared.Utils.EqualityComparer<T>(pred, hash));
+        }
+
+        public static IEnumerable<T> Intersect<T>(this IEnumerable<T> source, IEnumerable<T> target, Func<T, int> hash)
+        {
+            return source.Intersect(target, new Itemify.Shared.Utils.EqualityComparer<T>((a, b) => hash(a) == hash(b), hash));
         }
 
         public static Tuple<T, T> FirstLast<T>(this IEnumerable<T> source)
@@ -216,14 +237,6 @@ namespace Itemify.Core.Utils
         {
             var indexes = columnCount.Times();
             return list.Select(row => row.Zip(indexes, (o1, o2) => new { col = o2, val = o1 })).SelectMany(obj => obj.GroupBy(o => o.col)).Select(g => g.Select(o => o.val));
-        }
-
-        public static IEnumerable<int> EnumerateTo(this int start, int end)
-        {
-            for (; start <= end; start++)
-            {
-                yield return start;
-            }
         }
     }
 }

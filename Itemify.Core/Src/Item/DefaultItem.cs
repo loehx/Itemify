@@ -1,6 +1,6 @@
 ﻿using System;
 using Itemify.Core.ItemAccess;
-using Itemify.Core.ItemAccess.Entities;
+using Itemify.Core.PostgreSql.Entities;
 using Itemify.Core.Typing;
 
 namespace Itemify.Core.Item

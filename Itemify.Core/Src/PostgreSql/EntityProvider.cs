@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Itemify.Core.ItemAccess.Entities;
+using Itemify.Core.PostgreSql.Entities;
+using Itemify.Shared.Logging;
 
 namespace Itemify.Core.PostgreSql
 {
     internal class EntityProvider
     {
         private PostgreSqlProvider postgreSql;
-        private readonly EntityProviderLog log;
+        private readonly ILogWriter log;
         private readonly SortedSet<string> tables = new SortedSet<string>();
 
-        internal EntityProvider(PostgreSqlProvider postgreSql, EntityProviderLog log)
+        internal EntityProvider(PostgreSqlProvider postgreSql, ILogWriter log)
         {
             this.postgreSql = postgreSql;
             this.log = log;
@@ -52,7 +53,7 @@ namespace Itemify.Core.PostgreSql
 
                 if (!postgreSql.TableExists(tableName))
                 {
-                    log.CreateTable(tableName);
+                    log.Describe($"Create missing table: {tableName}");
                     postgreSql.CreateTable<ItemEntity>(tableName);
                 }
             }

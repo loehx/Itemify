@@ -53,5 +53,17 @@ namespace Itemify.Core.PostgreSql.Util
             columnSchemata[type.GUID] = results;
             return results;
         }
+
+
+        public static object GetDefault(this Type t)
+        {
+            Func<object> f = GetDefault<object>;
+            return f.Method.GetGenericMethodDefinition().MakeGenericMethod(t).Invoke(null, null);
+        }
+
+        private static T GetDefault<T>()
+        {
+            return default(T);
+        }
     }
 }
