@@ -46,6 +46,8 @@
   <ItemGroup>
     <Compile Include="Src\DefaultTypes.cs" />
     <Compile Include="Src\Exceptions\MissingCustomAttribute.cs" />
+    <Compile Include="Src\Exceptions\ItemNotFoundException.cs" />
+    <Compile Include="Src\ItemContext.cs" />
     <Compile Include="Src\ItemProvider.cs" />
     <Compile Include="Src\Item\DefaultItem.cs" />
     <Compile Include="Src\Item\IItem.cs" />
@@ -57,6 +59,7 @@
     <Compile Include="Src\PostgreSql\Entities\ItemEntity.cs" />
     <Compile Include="Src\PostgreSql\Entities\ItemMappingEntity.cs" />
     <Compile Include="Src\PostgreSql\Entities\SubTypeMappingEntity.cs" />
+    <Compile Include="Src\Exceptions\EntitityNotFoundException.cs" />
     <Compile Include="Src\PostgreSql\EntityProvider.cs" />
     <Compile Include="Src\PostgreSql\EntityProviderLog.cs" />
     <Compile Include="Src\Typing\TypeDefinition.cs" />

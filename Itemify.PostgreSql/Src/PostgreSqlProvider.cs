@@ -88,7 +88,7 @@ namespace Itemify.Core.PostgreSql
             sql.AppendFormat("    WHERE  table_schema = '{0}'", Schema).AppendLine();
             sql.AppendFormat("    AND    table_name = '{0}'", tableName).AppendLine();
             sql.AppendLine(");");
-            
+
             var result = db.QuerySingleValue(sql.ToString());
             return true.Equals(result);
         }
@@ -130,14 +130,14 @@ namespace Itemify.Core.PostgreSql
 
         public void Insert(string tableName, IAnonymousEntity entity, bool merge = true)
         {
-            log.Describe($"Insert {nameof(IAnonymousEntity)} into table: '{tableName}' ({nameof(merge)}: {merge})", entity);
+            log.Describe($"Insert {nameof(IAnonymousEntity)} into table: {tableName} ({nameof(merge)}: {merge})", entity);
 
             Insert(tableName, entity, true, false, merge);
         }
 
         public Guid Insert(string tableName, IGloballyUniqueEntity entity, bool upsert = false, bool merge = true)
         {
-            log.Describe($"Insert {nameof(IGloballyUniqueEntity)} into table: '{tableName}' ({nameof(upsert)}: {upsert}, {nameof(merge)}: {merge})", entity);
+            log.Describe($"Insert {nameof(IGloballyUniqueEntity)} into table: {tableName} ({nameof(upsert)}: {upsert}, {nameof(merge)}: {merge})", entity);
 
             if (entity.Guid == Guid.Empty)
                 entity.Guid = Guid.NewGuid();
@@ -151,7 +151,7 @@ namespace Itemify.Core.PostgreSql
 
         public int Insert(string tableName, IDefaultEntity entity, bool upsert = false, bool merge = true)
         {
-            log.Describe($"Insert {nameof(IDefaultEntity)} into table: '{tableName}' ({nameof(upsert)}: {upsert}, {nameof(merge)}: {merge})", entity);
+            log.Describe($"Insert {nameof(IDefaultEntity)} into table: {tableName} ({nameof(upsert)}: {upsert}, {nameof(merge)}: {merge})", entity);
 
             var insertPrimaryKey = entity.Id != default(int);
 
@@ -220,6 +220,46 @@ namespace Itemify.Core.PostgreSql
 
             var result = db.QuerySingleValue(query.ToString(), values);
             return result;
+        }
+
+        public int Update(string tableName, IEntityBase entity, bool merge)
+        {
+            var type = entity.GetType();
+            var columns = ReflectionUtil.GetColumnSchemas(type);
+            var query = new StringBuilder(columns.Count * 32);
+            var values = new List<object>(columns.Count);
+            var pos = 0;
+
+            query.Write($"UPDATE ")
+                .WriteLine(ResolveTableName(tableName))
+                .WriteTabbedLine(1, "SET");
+
+            for (int i = 0; i < columns.Count; i++)
+            {
+                var column = columns[i];
+                var value = columns[i].GetValue(entity);
+                var defaultValue = value?.GetType().GetDefault();
+
+                if (column.PrimaryKey)
+                    continue;
+
+                if (column.Nullable && (merge && value == defaultValue))
+                    continue;
+
+                values.Add(value);
+
+                query.WriteTabbed(2, '"' + columns[i].Name + '"')
+                    .Write(" = @" + pos++)
+                    .Write(",")
+                    .NewLine();
+            }
+
+            query.TrimEndLineBreaks()
+                .TrimEnd(',')
+                .NewLine();
+
+            var affected = db.Execute(query.ToString(), values);
+            return affected;
         }
 
         public void Execute(string query, params object[] parameters)

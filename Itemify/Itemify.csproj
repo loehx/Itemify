@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Src\Itemify.cs" />
+    <Compile Include="Src\Logging\CustomLogData.cs" />
     <Compile Include="Src\Logging\DebugLogData.cs" />
     <Compile Include="Src\Logging\LogEntry.cs" />
     <Compile Include="Src\Logging\RegionBasedLogWriter.cs" />

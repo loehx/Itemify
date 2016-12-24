@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Itemify.Core.Exceptions;
 using Itemify.Core.Item;
 using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql;
@@ -24,12 +25,13 @@ namespace Itemify.Core.Spec
         private EntityProvider entityProvider;
         private ItemProvider provider;
         private TypeManager typeManager;
+        private RegionBasedLogWriter logwriter;
 
         [SetUp]
         public void BeforeEach()
         {
             var log = new DebugLogData();
-            var logwriter = new RegionBasedLogWriter(log, nameof(ItemProviderTests), 0);
+            logwriter = new RegionBasedLogWriter(log, nameof(ItemProviderTests), 0);
             sqlProvider = new PostgreSqlProvider(connectionPool, logwriter.NewRegion(nameof(PostgreSqlProvider)), SCHEMA);
             sqlProvider.EnsureSchemaExists();
 
@@ -51,6 +53,7 @@ namespace Itemify.Core.Spec
         public void AfterEach()
         {
             sqlProvider.Dispose();
+            logwriter.Dispose();
         }
 
 
@@ -79,7 +82,7 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(item.Modified, DateTime.MinValue);
             Assert.IsFalse(item.IsParentResolved);
             Assert.AreEqual(item.Debug, false);
-            Assert.AreEqual(item.Name, null);
+            Assert.AreEqual(item.Name, "DeviceType");
             Assert.AreEqual(item.Order, 0);
             Assert.AreEqual(item.Parent, provider.Root);
             Assert.AreEqual(item.Revision, 0);
@@ -163,7 +166,7 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(item.Modified, DateTime.MinValue);
             Assert.IsFalse(item.IsParentResolved);
             Assert.AreEqual(item.Debug, false);
-            Assert.AreEqual(item.Name, null);
+            Assert.AreEqual(item.Name, "DeviceType");
             Assert.AreEqual(item.Order, int.MaxValue);
             Assert.AreEqual(item.Parent, provider.Root);
             Assert.AreEqual(item.Revision, 0);
@@ -244,7 +247,7 @@ namespace Itemify.Core.Spec
             item.ValueNumber = 1.1;
             item.ValueString = "string";
 
-            var id = provider.Save(item, true);
+            var id = provider.Save(item);
             Assert.AreEqual(id, item.Guid);
         }
 
@@ -260,7 +263,7 @@ namespace Itemify.Core.Spec
             item.ValueNumber = 1.1;
             item.ValueString = "string";
 
-            var id = provider.Save(item, true);
+            var id = provider.Save(item);
 
             var actual = provider.GetItemByReference(item);
 
@@ -281,6 +284,86 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(actual.ValueNumber, 1.1);
             Assert.AreEqual(actual.ValueDate, DateTime.MinValue.AddMilliseconds(1));
             Assert.IsTrue(actual.SubTypes.IsEmpty);
+        }
+
+
+
+        [Test]
+        public void SaveAndGetItem_SetValuesToNull()
+        {
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+
+            item.Name = "Example";
+            item.Order = -1;
+            item.ValueDate = DateTime.MinValue.AddMilliseconds(1);
+            item.ValueNumber = 1.1;
+            item.ValueString = "string";
+            item.SubTypes.Set(SensorType.Brightness, SensorType.SetTemperature);
+
+
+            var id = provider.Save(item);
+            var saved = provider.GetItemByReference(item);
+
+            saved.ValueDate = null;
+            saved.ValueNumber = null;
+            saved.ValueString = null;
+            saved.SetBody(null);
+            saved.Name = "New name";
+            saved.Order = 5;
+
+            provider.Save(saved);
+            var final = provider.GetItemByReference(item);
+
+            Assert.AreEqual(id, final.Guid);
+            Assert.AreEqual(1, final.Revision);
+            Assert.AreEqual("New name", final.Name);
+            Assert.AreEqual(5, final.Order);
+            Assert.AreEqual(null, final.ValueDate);
+            Assert.AreEqual(null, final.ValueNumber);
+            Assert.AreEqual(null, final.ValueString);
+            Assert.AreEqual(0, final.Children.Count);
+            Assert.AreEqual(0, final.Related.Count);
+            Assert.AreEqual(item.Created, final.Created);
+            Assert.AreNotEqual(item.Modified, final.Modified);
+            Assert.AreEqual(item.SubTypes, final.SubTypes);
+            Assert.AreEqual(item.Type, final.Type);
+            Assert.AreEqual(null, final.GetBody<string>());
+        }
+
+
+
+        [Test]
+        public void SaveAndGetItem_MinimumInformation()
+        {
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var id = provider.Save(item);
+            var saved = provider.GetItemByReference(item);
+           
+            Assert.AreEqual(id, saved.Guid);
+            Assert.AreEqual(0, saved.Revision);
+            Assert.AreEqual("DeviceType", saved.Name);
+            Assert.AreEqual(0, saved.Order);
+            Assert.AreEqual(null, saved.ValueDate);
+            Assert.AreEqual(null, saved.ValueNumber);
+            Assert.AreEqual(null, saved.ValueString);
+            Assert.AreEqual(0, saved.Children.Count);
+            Assert.AreEqual(0, saved.Related.Count);
+            Assert.AreEqual(item.Created, saved.Created);
+            Assert.AreEqual(item.Modified, saved.Modified);
+            Assert.IsTrue(saved.SubTypes.IsEmpty);
+            Assert.AreEqual(item.Type, saved.Type);
+            Assert.AreEqual(null, saved.TryGetBody<string>());
+            Assert.AreEqual(0, saved.TryGetBody<int>());
+            Assert.AreEqual(null, saved.TryGetBody<int?>());
+        }
+
+
+        [Test]
+        public void SaveExisting_NotExisting()
+        {
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+
+            Assert.Throws<ItemNotFoundException>(() => provider.SaveExisting(item));
         }
     }
 }

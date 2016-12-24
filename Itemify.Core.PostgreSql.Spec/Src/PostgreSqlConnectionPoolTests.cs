@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Logging;
+using Itemify.Shared.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NUnit.Framework;
 using Assert = NUnit.Framework.Assert;
@@ -12,7 +13,7 @@ namespace Itemify.Core.PostgreSql.Spec
     [TestClass()]
     public class PostgreSqlConnectionPoolTests
     {
-        private RegionBasedLogWriter logwriter;
+        private ILogWriter logwriter;
         private const string SCHEMA = "tests";
 
         private const string CONNECTION_STRING =

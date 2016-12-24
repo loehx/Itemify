@@ -23,13 +23,28 @@ namespace Itemify.Core.Typing
             this._items = new List<TypeItem>(items);
         }
 
-        public void Set<TEnum>(TEnum enumValue)
-            where TEnum : struct
+        public void Set(params Enum[] enumValue)
         {
-            var definition = typeManager.GetDefinitionByType(typeof(TEnum));
+            foreach (var @enum in enumValue)
+            {
+                Set(@enum);
+            }
+        }
+
+        public void Set(Enum enumValue)
+        {
+            var definition = typeManager.GetDefinitionByType(enumValue.GetType());
             var item = definition.GetItemByEnumValue((int)(object)enumValue);
 
             Set(item);
+        }
+
+        internal void Set(TypeItem item)
+        {
+            if (_items.Contains(item))
+                return;
+
+            _items.Add(item);
         }
 
         public void Unset<TEnum>(TEnum enumValue)
@@ -48,14 +63,6 @@ namespace Itemify.Core.Typing
             var item = definition.GetItemByEnumValue((int)(object)enumValue);
 
             return _items.Contains(item);
-        }
-
-        internal void Set(TypeItem item)
-        {
-            if (_items.Contains(item))
-                return;
-
-            _items.Add(item);
         }
 
         internal void Unset(TypeItem item)
@@ -85,8 +92,7 @@ namespace Itemify.Core.Typing
             return typeManager.ParseTypeSet(source);
         }
 
-        public TypeSet From<TEnum>(TEnum enumValue)
-            where TEnum : struct
+        public TypeSet From(Enum enumValue)
         {
             return typeManager.GetTypeSet(enumValue);
         }

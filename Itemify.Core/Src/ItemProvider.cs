@@ -1,4 +1,5 @@
 ﻿using System;
+using Itemify.Core.Exceptions;
 using Itemify.Core.Item;
 using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql;
@@ -29,7 +30,7 @@ namespace Itemify.Core
             return new DefaultItem(Guid.NewGuid(), type, context, parent);
         }
 
-        public Guid Save(IItem item, bool createIfNotExists)
+        public Guid Save(IItem item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -40,6 +41,36 @@ namespace Itemify.Core
             return provider.Upsert(actualItem.Type.Name, actualItem.GetEntity());
         }
 
+        public void SaveExisting(IItem item)
+        {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+
+            var actualItem = item as DefaultItem;
+            if (actualItem == null)
+                throw new ArgumentException($"Unknown item type: '{item.GetType().Name}'", nameof(item));
+
+            try
+            {
+                provider.Update(actualItem.Type.Name, actualItem.GetEntity());
+            }
+            catch (EntitityNotFoundException e)
+            {
+                throw new ItemNotFoundException(item, e);
+            }
+        }
+
+        public Guid SaveNew(IItem item)
+        {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+
+            var actualItem = item as DefaultItem;
+            if (actualItem == null)
+                throw new ArgumentException($"Unknown item type: '{item.GetType().Name}'", nameof(item));
+
+            return provider.Insert(actualItem.Type.Name, actualItem.GetEntity());
+        }
+
+
         public IItem GetItemByReference(IItemReference r)
         {
             var entity = provider.QuerySingle(r.Type.Name, r.Guid);
@@ -48,15 +79,5 @@ namespace Itemify.Core
 
             return new DefaultItem(entity, context);
         }
-    }
-
-    internal class ItemContext
-    {
-        public ItemContext(TypeManager typeManager)
-        {
-            TypeManager = typeManager;
-        }
-
-        public TypeManager TypeManager { get; }
     }
 }

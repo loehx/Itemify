@@ -49,7 +49,7 @@ namespace Itemify.Core.Item
 
         public string Name
         {
-            get { return string.IsNullOrEmpty(entity.Name) ? null : entity.Name; }
+            get { return string.IsNullOrEmpty(entity.Name) ? Type.Name : entity.Name; }
             set { entity.Name = value ?? ""; }
         }
 
@@ -129,7 +129,14 @@ namespace Itemify.Core.Item
             now = new DateTime(now.Ticks - (now.Ticks % TimeSpan.TicksPerMillisecond)); // cut off ticks
 
             if (entity.Created == DateTime.MinValue)
+            {
+                entity.Revision = 0;
                 entity.Created = now;
+            }
+            else
+            {
+                entity.Revision++;
+            }
 
             entity.Modified = now;
 

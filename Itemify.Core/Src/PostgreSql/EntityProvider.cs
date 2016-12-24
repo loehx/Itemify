@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Itemify.Core.Exceptions;
 using Itemify.Core.PostgreSql.Entities;
 using Itemify.Shared.Logging;
 
@@ -22,6 +23,18 @@ namespace Itemify.Core.PostgreSql
         {
             tableName = resolveTable(tableName);
             return postgreSql.Insert(tableName, entity, true);
+        }
+        public void Update(string tableName, ItemEntity entity)
+        {
+            tableName = resolveTable(tableName);
+            var affected = postgreSql.Update(tableName, entity, true);
+            if (affected == 0)
+                throw new EntitityNotFoundException(entity.Guid.ToString(), tableName);
+        }
+        public Guid Insert(string tableName, ItemEntity entity)
+        {
+            tableName = resolveTable(tableName);
+            return postgreSql.Insert(tableName, entity, false);
         }
 
         public void Delete(string tableName, Guid guid)
@@ -60,6 +73,5 @@ namespace Itemify.Core.PostgreSql
 
             return tableName;
         }
-
     }
 }

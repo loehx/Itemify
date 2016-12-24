@@ -2,6 +2,7 @@
 using System.Linq;
 using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Logging;
+using Lustitia.Utils;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 
@@ -358,9 +359,116 @@ namespace Itemify.Core.PostgreSql.Spec
             Assert.AreEqual(firstEntity.String, actual.String);
             Assert.AreEqual(firstEntity.Varchar, actual.Varchar);
         }
+
+        [Test]
+        public void Update_IDefaultEntity_NoMerge()
+        {
+            var tableName = "table_x";
+            var firstEntity = new EntityA()
+            {
+                Data = new byte[512],
+                NullableDateTime = DateTime.Now,
+                NullableInteger = int.MaxValue,
+                String = new string('S', 120),
+                Varchar = new string('S', 50)
+            };
+
+            provider.CreateTable<EntityA>(tableName);
+            var id = provider.Insert(tableName, firstEntity);
+
+            var secondEntity = firstEntity.MemberwiseClone() as EntityA;
+            Assert.IsNotNull(secondEntity);
+
+            secondEntity.Data = null;
+            secondEntity.DateTime = DateTime.Today;
+            secondEntity.DateTimeOffset = new DateTimeOffset(DateTime.Today);
+            secondEntity.NullableDateTime = null;
+            secondEntity.NullableInteger = null;
+            secondEntity.String = null;
+            secondEntity.Varchar = null;
+
+            provider.Update(tableName, secondEntity, false);
+
+            var actual = provider.Query<EntityA>($"SELECT * FROM {provider.ResolveTableName(tableName)} WHERE \"Id\" = @0", firstEntity.Id)
+                .FirstOrDefault();
+
+            Assert.AreEqual(null, actual.Data);
+            Assert.IsTrue(secondEntity.DateTime.Equals(actual.DateTime));
+            Assert.IsTrue(secondEntity.DateTimeOffset.Equals(actual.DateTimeOffset));
+            Assert.AreEqual(null, actual.NullableDateTime);
+            Assert.AreEqual(null, actual.NullableInteger);
+            Assert.AreEqual(null, actual.String);
+            Assert.AreEqual(null, actual.Varchar);
+        }
+
+
+        [Test]
+        public void Update_IDefaultEntity_Merge()
+        {
+            var tableName = "table_x";
+            var firstEntity = new EntityA()
+            {
+                Data = new byte[512],
+                NullableDateTime = DateTime.Today,
+                NullableInteger = int.MaxValue,
+                String = new string('S', 120),
+                Varchar = new string('S', 50)
+            };
+
+            provider.CreateTable<EntityA>(tableName);
+            var id = provider.Insert(tableName, firstEntity);
+
+            var secondEntity = firstEntity.MemberwiseClone() as EntityA;
+            Assert.IsNotNull(secondEntity);
+
+            secondEntity.Data = null;
+            secondEntity.DateTime = DateTime.Today;
+            secondEntity.DateTimeOffset = new DateTimeOffset(DateTime.Today);
+            secondEntity.NullableDateTime = null;
+            secondEntity.NullableInteger = null;
+            secondEntity.String = null;
+
+            var affected = provider.Update(tableName, secondEntity, true);
+            Assert.AreEqual(1, affected);
+
+            var actual = provider.Query<EntityA>($"SELECT * FROM {provider.ResolveTableName(tableName)} WHERE \"Id\" = @0", firstEntity.Id)
+                .FirstOrDefault();
+
+            Assert.AreEqual(firstEntity.Data, actual.Data);
+            Assert.IsTrue(secondEntity.DateTime.Equals(actual.DateTime));
+            Assert.IsTrue(secondEntity.DateTimeOffset.Equals(actual.DateTimeOffset));
+            Assert.AreEqual(firstEntity.NullableDateTime, actual.NullableDateTime);
+            Assert.AreEqual(firstEntity.NullableInteger, actual.NullableInteger);
+            Assert.AreEqual(firstEntity.String, actual.String);
+            Assert.AreEqual(firstEntity.Varchar, actual.Varchar);
+        }
+
+        [Test]
+        public void Update_IDefaultEntity_NotExisting()
+        {
+            var tableName = "table_x";
+            var firstEntity = new EntityA()
+            {
+                Data = new byte[512],
+                NullableDateTime = DateTime.Today,
+                NullableInteger = int.MaxValue,
+                String = new string('S', 120),
+                Varchar = new string('S', 50)
+            };
+
+            provider.CreateTable<EntityA>(tableName);
+            var id = provider.Insert(tableName, firstEntity);
+
+            provider.Execute($"DELETE FROM {provider.ResolveTableName(tableName)} WHERE \"Id\" = @0", id);
+
+            var secondEntity = firstEntity.MemberwiseClone() as EntityA;
+            var affected = provider.Update(tableName, secondEntity, true);
+
+            Assert.AreEqual(0, affected);
+        }
     }
 
-    public class EntityA : IDefaultEntity
+        public class EntityA : IDefaultEntity
     {
         [PostgreSqlColumn(dataType: "SERIAL", primaryKey: true)]
         public int Id { get; set; }

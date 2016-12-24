@@ -113,8 +113,7 @@ namespace Itemify.Core.Typing
             return new TypeSet(this, items);
         }
 
-        public TypeSet GetTypeSet<TEnum>(TEnum enumValue)
-            where TEnum : struct
+        public TypeSet GetTypeSet(Enum enumValue)
         {
             var set = new TypeSet(this);
             set.Set(enumValue);

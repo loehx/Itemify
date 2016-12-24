@@ -12,7 +12,7 @@ namespace Itemify.Shared.Logging
         Task FlushAsync();
         ILogWriter StartStopwatch();
         ILogWriter ClearStopwatch();
-        ILogWriter NewRegion(string name);
-        void Dispose();
+        ILogWriter NewRegion(int index);
+        ILogWriter NewRegion(string pascalCaseName);
     }
 }
