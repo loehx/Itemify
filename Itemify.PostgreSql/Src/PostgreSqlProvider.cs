@@ -41,6 +41,8 @@ namespace Itemify.Core.PostgreSql
         public bool CreateTable<TSchema>(string tableName)
             where TSchema : IEntityBase
         {
+            log.Describe($"{nameof(CreateTable)}<{typeof(TSchema).Name}>: {tableName}");
+
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentNullException(nameof(tableName));
 
@@ -50,7 +52,7 @@ namespace Itemify.Core.PostgreSql
             if (columns.Length == 0)
                 throw new Exception("No columns defined by " + nameof(PostgreSqlColumnAttribute) + " in class: " + type.Name);
 
-            sql.AppendFormat("CREATE TABLE")
+            sql.AppendFormat("CREATE TABLE ")
                 .WriteLine(ResolveTableName(tableName))
                 .WriteLine("(");
 
@@ -131,15 +133,11 @@ namespace Itemify.Core.PostgreSql
 
         public void Insert(string tableName, IAnonymousEntity entity, bool merge = true)
         {
-            log.Describe($"Insert {nameof(IAnonymousEntity)} into table: {tableName} ({nameof(merge)}: {merge})", entity);
-
             Insert(tableName, entity, true, false, merge);
         }
 
         public Guid Insert(string tableName, IGloballyUniqueEntity entity, bool upsert = false, bool merge = true)
         {
-            log.Describe($"Insert {nameof(IGloballyUniqueEntity)} into table: {tableName} ({nameof(upsert)}: {upsert}, {nameof(merge)}: {merge})", entity);
-
             if (entity.Guid == Guid.Empty)
                 entity.Guid = Guid.NewGuid();
 
@@ -152,8 +150,6 @@ namespace Itemify.Core.PostgreSql
 
         public int Insert(string tableName, IDefaultEntity entity, bool upsert = false, bool merge = true)
         {
-            log.Describe($"Insert {nameof(IDefaultEntity)} into table: {tableName} ({nameof(upsert)}: {upsert}, {nameof(merge)}: {merge})", entity);
-
             var insertPrimaryKey = entity.Id != default(int);
 
             var id = Insert(tableName, entity, insertPrimaryKey, upsert, merge);
@@ -165,6 +161,14 @@ namespace Itemify.Core.PostgreSql
 
         private object Insert(string tableName, IEntityBase entity, bool insertPrimaryKey, bool upsert, bool merge)
         {
+            log.Describe($"{nameof(Insert)} into: {tableName}", new
+            {
+                insertPrimaryKey,
+                upsert,
+                merge,
+                entity
+            });
+
             var type = entity.GetType();
             var columns = ReflectionUtil.GetColumnSchemas(type);
             var columnNames = new List<string>(columns.Count);
@@ -225,6 +229,12 @@ namespace Itemify.Core.PostgreSql
 
         public int Update(string tableName, IEntityBase entity, bool merge)
         {
+            log.Describe($"{nameof(Update)}: {tableName}", new
+            {
+                merge,
+                entity
+            });
+
             var type = entity.GetType();
             var columns = ReflectionUtil.GetColumnSchemas(type);
             var query = new StringBuilder(columns.Count * 32);
@@ -266,26 +276,33 @@ namespace Itemify.Core.PostgreSql
 
         public void BulkInsert(string tableName, IEnumerable<IAnonymousEntity> entities)
         {
-            BulkInsert(tableName, entities.Array(), false);
+            bulkInsert(tableName, entities.Array(), false);
         }
 
         public IEnumerable<Guid> BulkInsert(string tableName, IEnumerable<IGloballyUniqueEntity> entities)
         {
-            var ids = BulkInsert(tableName, entities.Array(), true);
+            var ids = bulkInsert(tableName, entities.Array(), true);
             return ids.Cast<Guid>();
         }
 
         public IEnumerable<int> BulkInsert(string tableName, IEnumerable<IDefaultEntity> entities)
         {
-            var ids = BulkInsert(tableName, entities.Array(), false);
+            var ids = bulkInsert(tableName, entities.Array(), false);
             return ids.Cast<int>();
         }
 
-        private IReadOnlyList<object> BulkInsert(string tableName, IReadOnlyList<IEntityBase> entities, bool insertPrimaryKey)
+        private IReadOnlyList<object> bulkInsert(string tableName, IReadOnlyList<IEntityBase> entities, bool insertPrimaryKey)
         {
             if (entities.Count == 0)
                 throw new ArgumentException("No entities to insert.");
 
+            log.Describe($"{nameof(bulkInsert)} into: {tableName}", new
+            {
+                insertPrimaryKey,
+                entities.Count
+            });
+
+            tableName = ResolveTableName(tableName);
             var type = entities[0].GetType();
             var columns = ReflectionUtil.GetColumnSchemas(type);
             var columnNames = new List<string>(columns.Count);
@@ -293,7 +310,6 @@ namespace Itemify.Core.PostgreSql
             var query = new StringBuilder(columns.Count * 32);
             var pos = 0;
             PostgreSqlColumnSchema pk = null;
-
 
             foreach (var column in columns)
             {
@@ -310,7 +326,7 @@ namespace Itemify.Core.PostgreSql
             }
 
             query.Write($"INSERT INTO ")
-                .WriteLine(ResolveTableName(tableName))
+                .WriteLine(tableName)
                 .WriteTabbedLine(1, $"({string.Join(", ", columnNames)})")
                 .WriteTabbedLine(1, "VALUES");
 

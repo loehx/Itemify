@@ -9,14 +9,18 @@ namespace Itemify.Core.Item
         where T: IItemReference
     {
         private List<T> inner { get; }
+        private bool isReadOnly;
 
+        public bool IsReadOnly => isReadOnly;
 
-        public ItemCollection()
+        public ItemCollection(bool isReadOnly = false)
         {
             inner = new List<T>();
+            this.isReadOnly = isReadOnly;
         }
 
-        public ItemCollection(IEnumerable<T> items)
+        public ItemCollection(IEnumerable<T> items, bool isReadOnly = false)
+            : this(isReadOnly)
         {
             inner = new List<T>(items);
         }
@@ -33,7 +37,7 @@ namespace Itemify.Core.Item
 
         public ReadOnlyCollection<T> AsReadOnly()
         {
-            return inner.AsReadOnly();
+            throw new NotSupportedException();
         }
 
         public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
@@ -273,9 +277,9 @@ namespace Itemify.Core.Item
             return inner.GetEnumerator();
         }
 
-        public bool IsReadOnly
+        internal void SetReadOnly(bool readOnly)
         {
-            get { return false; }
+            this.isReadOnly = readOnly;
         }
     }
 }

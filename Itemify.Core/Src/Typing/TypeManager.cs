@@ -66,9 +66,9 @@ namespace Itemify.Core.Typing
             return result;
         }
 
-        public TypeItem GetTypeItem<TEnum>(TEnum type)
+        public TypeItem GetTypeItem(Enum type)
         {
-            var t = typeof(TEnum);
+            var t = type.GetType();
             if (!t.IsEnum)
                 throw new ArgumentException($"Parameter {nameof(type)} must be an enum. Actual: {t}");
 

@@ -71,7 +71,7 @@ namespace Lustitia.Utils
 
             var result = String.Concat(filtered).Trim();
             if (string.IsNullOrEmpty(result))
-                return "0h";
+                return "<1ms";
 
             return result;
         }

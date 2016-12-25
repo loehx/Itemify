@@ -12,6 +12,7 @@ namespace Itemify.Core.Item
         private readonly ItemContext context;
         private readonly ItemEntity entity;
         private readonly IItemReference parent;
+        private readonly bool isNew;
         private TypeSet subTypes;
 
         public ItemCollection<IItemReference> Related { get; }
@@ -26,11 +27,14 @@ namespace Itemify.Core.Item
         public DateTime Created => entity.Created;
         public DateTime Modified => entity.Modified;
 
-        internal ItemBase(ItemContext context, ItemEntity entity, IItemReference parent, ItemCollection<IItemReference> related = null, ItemCollection<IItemReference> children = null)
+        public bool IsNew => isNew;
+
+        internal ItemBase(ItemContext context, ItemEntity entity, IItemReference parent, bool isNew, ItemCollection<IItemReference> related = null, ItemCollection<IItemReference> children = null)
         {
             this.context = context;
             this.entity = entity;
             this.parent = parent;
+            this.isNew = isNew;
 
             Related = related ?? new ItemCollection<IItemReference>();
             Children = children ?? new ItemCollection<IItemReference>();

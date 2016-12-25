@@ -11,6 +11,7 @@ namespace Itemify.Core.Item
         int Revision { get; }
         bool Debug { get; }
         bool HasBody { get; }
+        bool IsNew { get; }
         bool IsParentResolved { get; }
         IItemReference Parent { get; }
         ItemCollection<IItemReference> Children { get; }

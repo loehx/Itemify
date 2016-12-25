@@ -31,7 +31,7 @@ namespace Itemify.Core.Spec
         public void BeforeEach()
         {
             var log = new DebugLogData();
-            logwriter = new RegionBasedLogWriter(log, nameof(ItemProviderTests), 0);
+            logwriter = new RegionBasedLogWriter(log, "Spec", 0);
             sqlProvider = new PostgreSqlProvider(connectionPool, logwriter.NewRegion(nameof(PostgreSqlProvider)), SCHEMA);
             sqlProvider.EnsureSchemaExists();
 
@@ -40,7 +40,7 @@ namespace Itemify.Core.Spec
             typeManager.Register<SensorType>();
 
             entityProvider = new EntityProvider(sqlProvider, logwriter.NewRegion(nameof(EntityProvider)));
-            provider = new ItemProvider(entityProvider, typeManager, logwriter);
+            provider = new ItemProvider(entityProvider, typeManager, logwriter.NewRegion(nameof(ItemProvider)));
 
             var tables = sqlProvider.GetTableNamesBySchema(SCHEMA);
             foreach (var table in tables)
@@ -357,7 +357,6 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(null, saved.TryGetBody<int?>());
         }
 
-
         [Test]
         public void SaveExisting_NotExisting()
         {
@@ -365,9 +364,6 @@ namespace Itemify.Core.Spec
 
             Assert.Throws<ItemNotFoundException>(() => provider.SaveExisting(item));
         }
-
-
-
 
         [Test]
         public void SaveNew()
@@ -416,6 +412,27 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(actual.ValueNumber, Math.PI);
             Assert.AreEqual(actual.ValueDate, item.ValueDate);
             Assert.IsTrue(actual.SubTypes.IsEmpty);
+        }
+
+
+
+
+        [Test]
+        public void SaveChild()
+        {
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
+            var child = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+
+            item.Children.Add(child);
+
+            provider.SaveNew(item);
+
+            var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
+
+            Assert.AreEqual(1, actual.Children.Count);
+            Assert.AreEqual(item.Children.First().Guid, actual.Children.First().Guid);
+            Assert.AreEqual(item.Children.First().Type, actual.Children.First().Type);
+
         }
     }
 }

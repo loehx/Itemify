@@ -57,11 +57,10 @@
     <Compile Include="Src\Item\ItemCollection.cs" />
     <Compile Include="Src\Keywording\KeywordSet.cs" />
     <Compile Include="Src\PostgreSql\Entities\ItemEntity.cs" />
-    <Compile Include="Src\PostgreSql\Entities\ItemMappingEntity.cs" />
+    <Compile Include="Src\PostgreSql\Entities\ItemRelationEntity.cs" />
     <Compile Include="Src\PostgreSql\Entities\SubTypeMappingEntity.cs" />
     <Compile Include="Src\Exceptions\EntitityNotFoundException.cs" />
     <Compile Include="Src\PostgreSql\EntityProvider.cs" />
-    <Compile Include="Src\PostgreSql\EntityProviderLog.cs" />
     <Compile Include="Src\Typing\TypeDefinition.cs" />
     <Compile Include="Src\Typing\TypeDefinitionAttribute.cs" />
     <Compile Include="Src\Typing\TypeItem.cs" />
