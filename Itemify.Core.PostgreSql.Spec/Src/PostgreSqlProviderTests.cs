@@ -132,7 +132,7 @@ namespace Itemify.Core.PostgreSql.Spec
             {
                 Data = new byte[] { 0x0, 0x1, 0x2 },
                 DateTime = DateTime.MinValue,
-                DateTimeOffset = DateTimeOffset.MinValue,
+                DateTimeOffset = new DateTimeOffset(DateTime.Today).ToOffset(TimeSpan.FromHours(6)),
                 Integer = int.MinValue,
                 NullableDateTime = DateTime.MinValue,
                 NullableInteger = int.MinValue,
@@ -152,7 +152,7 @@ namespace Itemify.Core.PostgreSql.Spec
             Assert.AreEqual(expected.DateTime, actual.DateTime);
             Assert.AreEqual(expected.NullableDateTime, actual.NullableDateTime);
             Assert.AreEqual(expected.DateTimeOffset, actual.DateTimeOffset);
-            Assert.AreNotEqual(expected.DateTimeOffset.Offset, actual.DateTimeOffset.Offset, "The offset of DateTimeOffset.MinValue cannot be saved properly.");
+            Assert.AreEqual(expected.DateTimeOffset.Offset, actual.DateTimeOffset.Offset);
             Assert.AreEqual(expected.Integer, actual.Integer);
             Assert.AreEqual(expected.NullableInteger, actual.NullableInteger);
             Assert.AreEqual(expected.String, actual.String);
@@ -477,10 +477,10 @@ namespace Itemify.Core.PostgreSql.Spec
                 Data = new byte[(i + 1) * 8],
                 NullableDateTime = DateTime.Today.AddDays(i),
                 NullableInteger = int.MaxValue - i,
-                String = new string('S', i * 2),
-                Varchar = new string('S', i),
+                String = new string('S', i * 2 % 100),
+                Varchar = new string('S', i % 50),
                 DateTime = DateTime.Today.AddDays(i),
-                DateTimeOffset = new DateTimeOffset(DateTime.Today).AddDays(i),
+                DateTimeOffset = new DateTimeOffset(new DateTime(2017, 1, 1), TimeSpan.FromHours(i % 4)),
                 Integer = i
             }).ToArray();
 

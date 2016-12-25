@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Globalization;
 using System.Reflection;
 using Itemify.Core.PostgreSql.Util;
+using NpgsqlTypes;
 
 namespace Itemify.Core.PostgreSql
 {
@@ -27,17 +29,24 @@ namespace Itemify.Core.PostgreSql
 
             PrimaryKey = inner.PrimaryKey;
             Name = inner.Name ?? propertyInfo.Name;
-            DataType = inner.DataType ?? SqlUtil.GetSqlTypeFromType(type);
+            DataType = inner.DataType
+                ?? (type == typeof(DateTimeOffset) ? "varchar(39)" : SqlUtil.GetSqlTypeFromType(type));
             Nullable = underlyingType != null || type.IsClass;
             Indexing = inner.Indexing;
             // TODO: Implement column indexing
 
-            this.parseFunc = GetParseFuncByType(type, underlyingType != null);
+            this.parseFunc = getParseFuncByType(type, underlyingType != null);
         }
 
         public object GetValue(object entity)
         {
-            return propertyInfo.GetValue(entity);
+            var value = propertyInfo.GetValue(entity);
+
+            // WORKAROUND: https://github.com/npgsql/EntityFramework6.Npgsql/issues/14
+            if (value is DateTimeOffset)
+                return ((DateTimeOffset) value).ToString("o"); 
+
+            return value;
         }
 
         public void SetValue(object entity, object value)
@@ -52,14 +61,12 @@ namespace Itemify.Core.PostgreSql
             propertyInfo.SetValue(entity, value);
         }
 
-        public static Func<object, object> GetParseFuncByType(Type type, bool nullable)
+        private static Func<object, object> getParseFuncByType(Type type, bool nullable)
         {
             if (type == typeof(DateTimeOffset))
             {
-                return o =>
-                    o is DateTime
-                        ? new DateTimeOffset(DateTime.SpecifyKind((DateTime) o, DateTimeKind.Local))
-                        : o;
+                // WORKAROUND: https://github.com/npgsql/EntityFramework6.Npgsql/issues/14
+                return o => DateTimeOffset.Parse((string) o);
             }
 
             return o => o;

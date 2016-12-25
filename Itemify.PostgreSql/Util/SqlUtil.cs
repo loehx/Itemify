@@ -34,7 +34,7 @@ namespace Itemify.Core.PostgreSql.Util
             if (type == typeof(double)) return "float8";
             if (type == typeof(decimal)) return "numeric";
             if (type == typeof(DateTime)) return "timestamp";
-            if (type == typeof(DateTimeOffset)) return "timestamptz";
+            if (type == typeof(DateTimeOffset)) return "timestamp with time zone";
             if (type == typeof(TimeSpan)) return "time";
             if (type == typeof(bool)) return "bool";
             if (type == typeof(byte)) return "int2";
@@ -58,7 +58,7 @@ namespace Itemify.Core.PostgreSql.Util
             if (type == typeof(NpgsqlTsVector)) return "tsvector";
             if (type == typeof(NpgsqlDate)) return "date";
             if (type == typeof(NpgsqlDateTime)) return "timestamp";
-            if (type == typeof(NpgsqlDateTime)) return "timestamptz";
+            if (type == typeof(NpgsqlDateTime)) return "timestamp with time zone";
             if (type == typeof(byte[])) return "bytea";
             if (type == typeof(PostgisGeometry)) return "geometry";
 
