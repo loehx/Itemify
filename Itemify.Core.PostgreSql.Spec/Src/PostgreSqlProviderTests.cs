@@ -304,7 +304,7 @@ namespace Itemify.Core.PostgreSql.Spec
                 .FirstOrDefault();
 
             Assert.IsNotNull(actual);
-            Assert.AreEqual(expected.Type, actual.Type); 
+            Assert.AreEqual(expected.Type, actual.Type);
             Assert.IsTrue(expected.DateTime.Subtract(actual.DateTime) < TimeSpan.FromMilliseconds(1));
             Assert.IsFalse(actual.NullableDateTime.HasValue);
             Assert.IsFalse(expected.NullableDateTime.HasValue);
@@ -466,9 +466,64 @@ namespace Itemify.Core.PostgreSql.Spec
 
             Assert.AreEqual(0, affected);
         }
+
+
+        [Test]
+        public void BulkInsert_IDefaultEntity()
+        {
+            var tableName = "table_x";
+            var entities = 10.Times(i => new EntityA()
+            {
+                Data = new byte[(i + 1) * 8],
+                NullableDateTime = DateTime.Today.AddDays(i),
+                NullableInteger = int.MaxValue - i,
+                String = new string('S', i * 2),
+                Varchar = new string('S', i),
+                DateTime = DateTime.Today.AddDays(i),
+                DateTimeOffset = new DateTimeOffset(DateTime.Today).AddDays(i),
+                Integer = i
+            }).ToArray();
+
+            provider.CreateTable<EntityA>(tableName);
+
+            var ids = provider.BulkInsert(tableName, entities);
+            Assert.AreEqual(entities.Length, ids.Count());
+
+            var actualEntities =
+                provider.Query<EntityA>($"SELECT * FROM {provider.ResolveTableName(tableName)}").ToArray();
+
+            for (int i = 0; i < entities.Length; i++)
+            {
+                var actual = actualEntities[i];
+                var expected = entities[i];
+
+                Assert.IsNotNull(actual);
+                Assert.IsTrue(expected.DateTime.Subtract(actual.DateTime) < TimeSpan.FromMilliseconds(1));
+                Assert.IsTrue(actual.NullableDateTime.HasValue);
+                Assert.IsTrue(expected.NullableDateTime.Value.Subtract(actual.NullableDateTime.Value) < TimeSpan.FromMilliseconds(1));
+                Assert.IsTrue(expected.DateTimeOffset.Subtract(actual.DateTimeOffset) < TimeSpan.FromMilliseconds(1));
+                Assert.AreEqual(expected.DateTimeOffset.Offset, actual.DateTimeOffset.Offset);
+                Assert.AreEqual(expected.Integer, actual.Integer);
+                Assert.AreEqual(expected.NullableInteger, actual.NullableInteger);
+                Assert.AreEqual(expected.String, actual.String);
+                Assert.AreEqual(expected.Varchar, actual.Varchar);
+            }
+        }
+
+        //[Test]
+        public void BulkInsert_IGloballyUniqueEntity()
+        {
+            throw new NotImplementedException();
+        }
+
+        //[Test]
+        public void BulkInsert_IAnonymousEntity()
+        {
+            throw new NotImplementedException();
+        }
     }
 
-        public class EntityA : IDefaultEntity
+    public class EntityA : IDefaultEntity
     {
         [PostgreSqlColumn(dataType: "SERIAL", primaryKey: true)]
         public int Id { get; set; }

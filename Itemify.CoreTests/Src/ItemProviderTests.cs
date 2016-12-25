@@ -365,5 +365,57 @@ namespace Itemify.Core.Spec
 
             Assert.Throws<ItemNotFoundException>(() => provider.SaveExisting(item));
         }
+
+
+
+
+        [Test]
+        public void SaveNew()
+        {
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+
+            item.Name = "Example";
+            item.Order = -1;
+            item.ValueDate = DateTime.MinValue.AddMilliseconds(1);
+            item.ValueNumber = 1.1;
+            item.ValueString = "string";
+
+            var id = provider.SaveNew(item);
+            Assert.AreEqual(id, item.Guid);
+        }
+
+
+        [Test]
+        public void SaveNewAndGet()
+        {
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+
+            item.Order = Int32.MaxValue;
+            item.ValueDate = new DateTime(2100, 1, 1);
+            item.ValueNumber = Math.PI;
+            item.ValueString = new string('C', 1024 * 1024);
+
+            var id = provider.SaveNew(item);
+
+            var actual = provider.GetItemByReference(item);
+
+            Assert.AreNotEqual(Guid.Empty, actual.Guid);
+            Assert.AreEqual(id, actual.Guid);
+            Assert.AreEqual(actual.Type, typeManager.GetTypeItem(DeviceType.Meter));
+            Assert.AreEqual(actual.Children.Count, 0);
+            Assert.AreEqual(actual.Related.Count, 0);
+            Assert.AreEqual(actual.Created, item.Created);
+            Assert.AreEqual(actual.Modified, item.Modified);
+            Assert.IsFalse(actual.IsParentResolved);
+            Assert.AreEqual(actual.Debug, false);
+            Assert.AreEqual(actual.Name, "DeviceType");
+            Assert.AreEqual(actual.Order, Int32.MaxValue);
+            Assert.AreEqual(actual.Parent, provider.Root);
+            Assert.AreEqual(actual.Revision, 0);
+            Assert.AreEqual(actual.ValueString, item.ValueString);
+            Assert.AreEqual(actual.ValueNumber, Math.PI);
+            Assert.AreEqual(actual.ValueDate, item.ValueDate);
+            Assert.IsTrue(actual.SubTypes.IsEmpty);
+        }
     }
 }

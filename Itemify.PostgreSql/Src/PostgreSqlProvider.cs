@@ -8,6 +8,7 @@ using System.Text;
 using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Core.PostgreSql.Util;
 using Itemify.Shared.Logging;
+using Lustitia.Utils;
 using Npgsql;
 
 namespace Itemify.Core.PostgreSql
@@ -262,6 +263,113 @@ namespace Itemify.Core.PostgreSql
             return affected;
         }
 
+
+        public void BulkInsert(string tableName, IEnumerable<IAnonymousEntity> entities)
+        {
+            BulkInsert(tableName, entities.Array(), false);
+        }
+
+        public IEnumerable<Guid> BulkInsert(string tableName, IEnumerable<IGloballyUniqueEntity> entities)
+        {
+            var ids = BulkInsert(tableName, entities.Array(), true);
+            return ids.Cast<Guid>();
+        }
+
+        public IEnumerable<int> BulkInsert(string tableName, IEnumerable<IDefaultEntity> entities)
+        {
+            var ids = BulkInsert(tableName, entities.Array(), false);
+            return ids.Cast<int>();
+        }
+
+        private IReadOnlyList<object> BulkInsert(string tableName, IReadOnlyList<IEntityBase> entities, bool insertPrimaryKey)
+        {
+            if (entities.Count == 0)
+                throw new ArgumentException("No entities to insert.");
+
+            var type = entities[0].GetType();
+            var columns = ReflectionUtil.GetColumnSchemas(type);
+            var columnNames = new List<string>(columns.Count);
+            var values = new List<object>(columns.Count * entities.Count);
+            var query = new StringBuilder(columns.Count * 32);
+            var pos = 0;
+            PostgreSqlColumnSchema pk = null;
+
+
+            foreach (var column in columns)
+            {
+                // don't insert PK if specified
+                if (column.PrimaryKey)
+                {
+                    pk = column;
+
+                    if (!insertPrimaryKey)
+                        continue;
+                }
+
+                columnNames.Add('"' + column.Name + '"');
+            }
+
+            query.Write($"INSERT INTO ")
+                .WriteLine(ResolveTableName(tableName))
+                .WriteTabbedLine(1, $"({string.Join(", ", columnNames)})")
+                .WriteTabbedLine(1, "VALUES");
+
+
+            foreach (var entity in entities)
+            {
+                if (!type.IsInstanceOfType(entity))
+                    throw new Exception($"Mixed up entities in bulk insert. ({type.Name} != {entity.GetType().Name})");
+
+                query.WriteTabbed(2, "(");
+
+                foreach (var column in columns)
+                {
+                    // don't insert PK if specified
+                    if (column.PrimaryKey && !insertPrimaryKey)
+                        continue;
+
+                    var value = column.GetValue(entity);
+                    values.Add(value);
+
+                    query.Append('@').Append(pos++).Append(',');
+                }
+
+                query.TrimEnd(',').Append("),").NewLine();
+            }
+
+            query.TrimEndLineBreaks()
+                .TrimEnd(',')
+                .NewLine();
+
+            if (pk == null)
+            {
+                var affected = db.Execute(query.ToString(), values);
+                Debug.Assert(affected == 1);
+
+                return new object[0];
+            }
+            else
+            {
+                var insertedIds = new List<object>();
+                query.WriteTabbedLine(1, $"RETURNING \"{pk.Name}\"");
+
+                using (var reader = db.Query(query.ToString(), values))
+                {
+                    Debug.Assert(reader.VisibleFieldCount == 1);
+
+                    while (reader.Read())
+                    {
+                        var id = reader.GetValue(0);
+                        insertedIds.Add(id);
+
+                        Debug.Assert(id != null);
+                    }
+                }
+
+                return insertedIds;
+            }
+        }
+
         public void Execute(string query, params object[] parameters)
         {
             db.Execute(query, parameters);
@@ -279,7 +387,7 @@ namespace Itemify.Core.PostgreSql
             if (string.IsNullOrWhiteSpace(query))
                 throw new ArgumentNullException(nameof(query));
 
-            Debug.Assert(query.Contains("@" + (parameters.Length - 1)), "Query should contain exactly " + parameters.Length + " placeholders like @0, @1, ...");
+            Debug.Assert(parameters.Length == 0 || query.Contains("@" + (parameters.Length - 1)), "Query should contain exactly " + parameters.Length + " placeholders like @0, @1, ...");
 
             var type = typeof(TEntity);
 
