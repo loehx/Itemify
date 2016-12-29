@@ -27,6 +27,12 @@ namespace Itemify.Core.Spec
         private TypeManager typeManager;
         private RegionBasedLogWriter logwriter;
 
+
+
+        #region -----[   Test setup   ]------------------------------------------------------------------------------------------------------------------------------
+
+
+
         [SetUp]
         public void BeforeEach()
         {
@@ -114,6 +120,11 @@ namespace Itemify.Core.Spec
                 public double DecimalValue { get; set; }
             }
         }
+
+
+#endregion
+
+        #region -----[   Item instance   ]------------------------------------------------------------------------------------------------------------------------------
 
         [Test]
         public void NewItem_B()
@@ -235,6 +246,28 @@ namespace Itemify.Core.Spec
 
             Assert.Throws<ArgumentOutOfRangeException>(() => item.ValueDate = DateTime.MinValue); // reserved by Itemify
         }
+
+        [Test]
+        public void SerializeItem()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void DeserializeItem_FromString()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void DeserializeItem_FromBadString()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region -----[   Save and get item   ]------------------------------------------------------------------------------------------------------------------------------
 
         [Test]
         public void SaveItem()
@@ -415,10 +448,161 @@ namespace Itemify.Core.Spec
         }
 
 
+        #endregion
+
+        #region -----[   Relations   ]------------------------------------------------------------------------------------------------------------------------------
 
 
         [Test]
-        public void SaveChild()
+        public void SetRelation_ToSingleItem()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SetRelation_ToSeveralItems()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SetRelation_ToSingleItemTwice()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SetRelation_ToSeveralItemsTwice()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        [ExpectedException(typeof(ItemNotFoundException))]
+        public void SetRelation_ToNotExistingItem()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        [ExpectedException(typeof(Exception))]
+        public void SetRelation_ToSameItem()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        [ExpectedException(typeof(Exception))]
+        public void SetRelation_ToRootItem()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void RemoveRelation_ToSingleItem()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void RemoveRelation_ToSeveralItems()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void RemoveRelation_ToSingleItemTwice()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [Test]
+        public void SaveAndGetNewItem_WithNewRelation()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetNewItem_WithExistingRelation()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        [ExpectedException(typeof(ItemNotFoundException))]
+        public void SaveAndGetNewItem_WithNotExistingRelation()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetNewItem_WithNewRelations()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetNewItem_WithExistingRelations()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [Test]
+        public void SaveAndGetNewItem_WithExistingAndNewRelations()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [Test]
+        public void SaveAndGetExistingItem_WithNewRelation()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetExistingItem_WithExistingRelation()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        [ExpectedException(typeof(ItemNotFoundException))]
+        public void SaveAndGetExistingItem_WithNotExistingRelation()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetExistingItem_WithNewRelations()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetExistingItem_WithExistingRelations()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [Test]
+        public void SaveAndGetExistingItem_WithExistingAndNewRelations()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region -----[   Children   ]------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+        [Test]
+        public void SaveAndGetNewItem_WithNewChild()
         {
             var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
             var child = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
@@ -432,7 +616,81 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(1, actual.Children.Count);
             Assert.AreEqual(item.Children.First().Guid, actual.Children.First().Guid);
             Assert.AreEqual(item.Children.First().Type, actual.Children.First().Type);
-
         }
+
+        [Test]
+        public void SaveAndGetNewItem_WithExistingChild()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        [ExpectedException(typeof(ItemNotFoundException))]
+        public void SaveAndGetNewItem_WithNotExistingChild()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetNewItem_WithNewChildren()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetNewItem_WithExistingChildren()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [Test]
+        public void SaveAndGetNewItem_WithExistingAndNewChildren()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [Test]
+        public void SaveAndGetExistingItem_WithNewChild()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetExistingItem_WithExistingChild()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        [ExpectedException(typeof(ItemNotFoundException))]
+        public void SaveAndGetExistingItem_WithNotExistingChild()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetExistingItem_WithNewChildren()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Test]
+        public void SaveAndGetExistingItem_WithExistingChildren()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [Test]
+        public void SaveAndGetExistingItem_WithExistingAndNewChildren()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+
     }
 }
