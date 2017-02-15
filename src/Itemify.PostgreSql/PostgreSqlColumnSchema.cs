@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Globalization;
 using System.Reflection;
 using Itemify.Core.PostgreSql.Util;
-using NpgsqlTypes;
 
 namespace Itemify.Core.PostgreSql
 {
@@ -31,7 +29,7 @@ namespace Itemify.Core.PostgreSql
             Name = inner.Name ?? propertyInfo.Name;
             DataType = inner.DataType
                 ?? (type == typeof(DateTimeOffset) ? "varchar(39)" : SqlUtil.GetSqlTypeFromType(type));
-            Nullable = underlyingType != null || type.IsClass;
+            Nullable = underlyingType != null || type.GetTypeInfo().IsClass;
             Indexing = inner.Indexing;
             // TODO: Implement column indexing
 

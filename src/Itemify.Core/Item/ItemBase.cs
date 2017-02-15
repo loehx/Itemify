@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using Itemify.Core.Keywording;
 using Itemify.Core.PostgreSql.Entities;
 using Itemify.Core.Typing;
 using Itemify.Shared.Utils;

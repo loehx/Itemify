@@ -6,10 +6,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Itemify.Shared.Utils;
+using Itemify.Shared.Interfaces;
 using Newtonsoft.Json.Linq;
 
 // ReSharper disable once CheckNamespace
-namespace Lustitia.Utils
+namespace Itemify.Shared.Utils
 {
     public enum DateTimeUnit
     {
@@ -179,7 +180,7 @@ namespace Lustitia.Utils
             if (o != null)
                 return o.ToObject<T>();
 
-            if (type.IsEnum)
+            if (type.GetTypeInfo().IsEnum)
                 return (T)Enum.Parse(type, value.ToString(), true);
 
             if (type == typeof(Guid))
@@ -299,7 +300,7 @@ namespace Lustitia.Utils
             foreach (var fi in source.GetType().GetFields())
             {
                 //We query if the fiels support the ICloneable interface.
-                var cloneType = fi.FieldType.GetInterface("ICloneable", true);
+                var cloneType = fi.FieldType.GetTypeInfo().GetInterface("ICloneable", true);
 
                 if (cloneType != null)
                 {
@@ -320,7 +321,7 @@ namespace Lustitia.Utils
                 //IEnumerable interface, so if it does
                 //we need to enumerate all its items and check if 
                 //they support the ICloneable interface.
-                var enumerableType = fi.FieldType.GetInterface("IEnumerable", true);
+                var enumerableType = fi.FieldType.GetTypeInfo().GetInterface("IEnumerable", true);
                 if (enumerableType != null)
                 {
                     //Get the IEnumerable interface from the field.
@@ -328,8 +329,8 @@ namespace Lustitia.Utils
 
                     //This version support the IList and the 
                     //IDictionary interfaces to iterate on collections.
-                    var listType = fields[i].FieldType.GetInterface("IList", true);
-                    var dicType = fields[i].FieldType.GetInterface("IDictionary", true);
+                    var listType = fields[i].FieldType.GetTypeInfo().GetInterface("IList", true);
+                    var dicType = fields[i].FieldType.GetTypeInfo().GetInterface("IDictionary", true);
 
                     var j = 0;
                     if (listType != null)
@@ -341,7 +342,7 @@ namespace Lustitia.Utils
                         {
                             //Checking to see if the current item 
                             //support the ICloneable interface.
-                            cloneType = obj.GetType().GetInterface("ICloneable", true);
+                            cloneType = obj.GetType().GetTypeInfo().GetInterface("ICloneable", true);
 
                             if (cloneType != null)
                             {
@@ -372,7 +373,7 @@ namespace Lustitia.Utils
                         {
                             //Checking to see if the item 
                             //support the ICloneable interface.
-                            cloneType = de.Value.GetType().GetInterface("ICloneable", true);
+                            cloneType = de.Value.GetType().GetTypeInfo().GetInterface("ICloneable", true);
 
                             if (cloneType != null)
                             {

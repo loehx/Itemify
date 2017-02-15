@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Itemify.Shared.Attributes;
-
 // ReSharper disable once CheckNamespace
-namespace Lustitia.Utils
+namespace Itemify.Shared.Utils
 {
     public static class EnumUtil
     {
@@ -32,11 +31,11 @@ namespace Lustitia.Utils
             if (enumItem == null) throw new ArgumentNullException(nameof(enumItem));
 
             var type = enumItem.GetType();
-            if (!type.IsEnum)
+            if (!type.GetTypeInfo().IsEnum)
                 throw new ArgumentException($"Parameter {nameof(enumItem)} must be an enum. Actual: {type}");
 
             var itemName = enumItem.ToString();
-            var field = type.GetField(itemName);
+            var field = type.GetTypeInfo().GetField(itemName);
             return field.GetCustomAttributes(typeof(T), false).OfType<T>();
         }
 
@@ -45,18 +44,18 @@ namespace Lustitia.Utils
             where TEnum : struct
         {
             var type = typeof(TEnum);
-            if (!type.IsEnum)
+            if (!type.GetTypeInfo().IsEnum)
                 throw new ArgumentException($"Parameter {nameof(TEnum)} must be an enum. Actual: {type}");
 
             // Flagged enums
-            if (type.IsDefined(typeof(FlagsAttribute), false))
+            if (type.GetTypeInfo().IsDefined(typeof(FlagsAttribute), false))
             {
                 foreach (var e in GetFlagValues(type))
                     yield return (TEnum) (object) e;
             }
             else
             {
-                var fields = type.GetFields();
+                var fields = type.GetTypeInfo().GetFields();
                 foreach (var field in fields)
                 {
                     if (field.IsSpecialName)
@@ -87,10 +86,10 @@ namespace Lustitia.Utils
             where TEnum : struct
         {
             var type = typeof(TEnum);
-            if (!type.IsEnum)
+            if (!type.GetTypeInfo().IsEnum)
                 throw new ArgumentException($"Parameter {nameof(TEnum)} must be an enum. Actual: {type}");
 
-            var fields = type.GetFields();
+            var fields = type.GetTypeInfo().GetFields();
             foreach (var field in fields)
             {
                 var attr = field.GetCustomAttribute<TAttribute>();

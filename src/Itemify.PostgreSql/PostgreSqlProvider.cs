@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Core.PostgreSql.Util;
 using Itemify.Shared.Logging;
-using Lustitia.Utils;
+using Itemify.Shared.Utils;
 using Npgsql;
 
 namespace Itemify.Core.PostgreSql
@@ -333,7 +332,7 @@ namespace Itemify.Core.PostgreSql
 
             foreach (var entity in entities)
             {
-                if (!type.IsInstanceOfType(entity))
+                if (!type.GetTypeInfo().IsInstanceOfType(entity))
                     throw new Exception($"Mixed up entities in bulk insert. ({type.Name} != {entity.GetType().Name})");
 
                 query.WriteTabbed(2, "(");
@@ -468,7 +467,6 @@ namespace Itemify.Core.PostgreSql
             for (var i = 0; i < reader.VisibleFieldCount; i++)
                 columns[i] = reader.GetName(i);
 
-            StringCollection a;
 
             return columns;
         }

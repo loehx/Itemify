@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -61,7 +60,7 @@ namespace Itemify.Shared.Utils
             {
                 return JsonConvert.DeserializeObject<T>(json, Settings);
             }
-            catch (Exception err)
+            catch (Exception)
             {
                 return default(T);
             }
@@ -74,7 +73,7 @@ namespace Itemify.Shared.Utils
         }
 
         public static T StringifyTo<T>(this T source, string filepath, bool indent = true)
-            where T: class
+            where T : class
         {
             var json = JsonUtil.Stringify(source, indent);
 
@@ -90,7 +89,7 @@ namespace Itemify.Shared.Utils
             var fname = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
             return SaveEachAsJsonTo(source, directory, fname, indent);
         }
-    
+
         public static IEnumerable<T> SaveEachAsJsonTo<T>(this IEnumerable<T> source, string directory, string fileName, bool indent = true)
         {
             var items = source as IReadOnlyList<T> ?? source.ToArray();
@@ -145,5 +144,14 @@ namespace Itemify.Shared.Utils
             filePath = Path.Combine(directory, fname);
             File.WriteAllText(filePath, contents, Encoding.Default);
         }
+
+#if NET_CORE
+
+        private abstract class Encoding : System.Text.Encoding
+        {
+            public static System.Text.Encoding Default { get { return System.Text.Encoding.GetEncoding(0); } }
+
+        }
+#endif
     }
 }

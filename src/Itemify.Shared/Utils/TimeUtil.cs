@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Lustitia.Utils
+namespace Itemify.Shared.Utils
 {
     public static class TimeUtil
     {

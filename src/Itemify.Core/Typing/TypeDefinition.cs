@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -45,7 +44,11 @@ namespace Itemify.Core.Typing
 
                 var typeValue = new TypeValue(attr, (int) field.GetValue(null));
                 if (typeValues.Contains(typeValue))
+                    #if !NET_CORE
                     throw new DuplicateNameException($"Duplicate '{nameof(TypeValue)}' in enum '{_type.Name}': '{typeValue.Value}'");
+                    #else
+                    throw new Exception($"Duplicate '{nameof(TypeValue)}' in enum '{_type.Name}': '{typeValue.Value}'");
+                    #endif
 
                 typeValues.Add(typeValue);
 

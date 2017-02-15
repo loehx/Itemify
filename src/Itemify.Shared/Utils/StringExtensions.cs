@@ -6,7 +6,7 @@ using System.Text;
 using Humanizer;
 
 // ReSharper disable once CheckNamespace
-namespace Lustitia.Utils
+namespace Itemify.Shared.Utils
 {
     public static class StringExtensions
     {
@@ -149,7 +149,7 @@ namespace Lustitia.Utils
         /// </summary>
         public static bool Contains(this string source, string toCheck, bool ingoreCase)
         {
-            return source.IndexOf(toCheck, StringComparison.InvariantCultureIgnoreCase) >= 0;
+            return source.IndexOf(toCheck, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         /// <summary>
@@ -234,5 +234,13 @@ namespace Lustitia.Utils
 
             return asciiString;
         }
+    
+    #if NET_CORE
+
+    private abstract class Encoding : System.Text.Encoding {
+        public static System.Text.Encoding Default { get { return System.Text.Encoding.GetEncoding(0); }}
+
+    }
+    #endif
     }
 }

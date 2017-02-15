@@ -4,8 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Itemify.Core.Exceptions;
-using Itemify.Core.ItemAccess;
-using Lustitia.Utils;
+using Itemify.Shared.Utils;
 
 namespace Itemify.Core.Typing
 {
@@ -28,10 +27,10 @@ namespace Itemify.Core.Typing
 
         public void Register(Type type)
         {
-            if (!type.IsEnum)
+            if (!type.GetTypeInfo().IsEnum)
                 throw new ArgumentException($"Parameter {nameof(type)} must be an enum. Actual: {type}");
 
-            var attr = type.GetCustomAttribute(typeof(TypeDefinitionAttribute)) as TypeDefinitionAttribute;
+            var attr = type.GetTypeInfo().GetCustomAttribute(typeof(TypeDefinitionAttribute)) as TypeDefinitionAttribute;
             if (attr == null)
                 throw new MissingCustomAttribute($"Type {type.Name} is missing a custom attribute of type {nameof(TypeDefinitionAttribute)}");
 
@@ -69,10 +68,10 @@ namespace Itemify.Core.Typing
         public TypeItem GetTypeItem(Enum type)
         {
             var t = type.GetType();
-            if (!t.IsEnum)
+            if (!t.GetTypeInfo().IsEnum)
                 throw new ArgumentException($"Parameter {nameof(type)} must be an enum. Actual: {t}");
 
-            var attr = t.GetCustomAttribute(typeof(TypeDefinitionAttribute)) as TypeDefinitionAttribute;
+            var attr = t.GetTypeInfo().GetCustomAttribute(typeof(TypeDefinitionAttribute)) as TypeDefinitionAttribute;
             if (attr == null)
                 throw new MissingCustomAttribute($"Type {t} is missing a custom attribute of type {nameof(TypeDefinitionAttribute)}");
 

@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Humanizer;
 using Itemify.Shared.Logging;
 using Itemify.Shared.Utils;
-using Lustitia.Utils;
 
 namespace Itemify.Logging
 {

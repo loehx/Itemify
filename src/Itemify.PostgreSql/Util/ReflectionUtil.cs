@@ -33,7 +33,7 @@ namespace Itemify.Core.PostgreSql.Util
         private static readonly Hashtable columnSchemata = Hashtable.Synchronized(new Hashtable());
         public static IReadOnlyList<PostgreSqlColumnSchema> GetColumnSchemas(Type type)
         {
-            var cached = columnSchemata[type.GUID] as List<PostgreSqlColumnSchema>;
+            var cached = columnSchemata[type.GetTypeInfo().GUID] as List<PostgreSqlColumnSchema>;
             if (cached != null)
                 return cached;
 
@@ -50,7 +50,7 @@ namespace Itemify.Core.PostgreSql.Util
                 results.Add(new PostgreSqlColumnSchema(attr, propertyInfo));
             }
 
-            columnSchemata[type.GUID] = results;
+            columnSchemata[type.GetTypeInfo().GUID] = results;
             return results;
         }
 
@@ -58,7 +58,7 @@ namespace Itemify.Core.PostgreSql.Util
         public static object GetDefault(this Type t)
         {
             Func<object> f = GetDefault<object>;
-            return f.Method.GetGenericMethodDefinition().MakeGenericMethod(t).Invoke(null, null);
+            return f.GetMethodInfo().GetGenericMethodDefinition().MakeGenericMethod(t).Invoke(null, null);
         }
 
         private static T GetDefault<T>()

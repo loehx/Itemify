@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Itemify.Shared.Logging;
-using Lustitia.Utils;
+using Itemify.Shared.Utils;
 
 namespace Itemify.Logging
 {

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 // ReSharper disable once CheckNamespace
-namespace Lustitia.Utils
+namespace Itemify.Shared.Utils
 {
     public static class EnumerableExtensions
     {

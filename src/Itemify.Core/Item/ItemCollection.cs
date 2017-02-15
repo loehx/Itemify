@@ -65,10 +65,12 @@ namespace Itemify.Core.Item
             return inner.Contains(item);
         }
 
+#if !NET_CORE //TODO:actiual migration
         public List<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
         {
             return inner.ConvertAll(converter);
         }
+#endif
 
         public void CopyTo(T[] array)
         {

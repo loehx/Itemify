@@ -4,10 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
 
 // ReSharper disable once CheckNamespace
-namespace Lustitia.Utils
+namespace Itemify.Shared.Utils
 {
     public static partial class CryptionUtils
     {
@@ -34,10 +33,10 @@ namespace Lustitia.Utils
 
                     for (var j = 0; j < saltBytes.Length; j++)
                     {
-                        bytes[j%length] ^= saltBytes[j];
+                        bytes[j % length] ^= saltBytes[j];
                     }
 
-                    bytes[3] = (byte) (bytes[0] ^ bytes[1] ^ bytes[2]);
+                    bytes[3] = (byte)(bytes[0] ^ bytes[1] ^ bytes[2]);
 
                     yield return bytes.MapHexBytes(0, bytes.Length, "ABCDEHKMOSTUWXYZ");
                 }
@@ -54,10 +53,10 @@ namespace Lustitia.Utils
                 var bytes = UnmapHexedBytes(key, "ABCDEHKMOSTUWXYZ");
                 unchecked
                 {
-                    return bytes[3] == (byte) (bytes[0] ^ bytes[1] ^ bytes[2]);
+                    return bytes[3] == (byte)(bytes[0] ^ bytes[1] ^ bytes[2]);
                 }
             }
-            catch(Exception err)
+            catch (Exception err)
             {
                 Debug.WriteLine(err);
                 return false;
@@ -99,6 +98,17 @@ namespace Lustitia.Utils
             return Encoding.Default.GetBytes(source);
         }
 
+
+#if NET_CORE
+
+        private abstract class Encoding : System.Text.Encoding
+        {
+            public static System.Text.Encoding Default { get { return System.Text.Encoding.GetEncoding(0); } }
+
+        }
+#endif
+
+
         /// <summary>
         /// Generiert ein Base 64 String aus einem String.
         /// </summary>
@@ -116,7 +126,7 @@ namespace Lustitia.Utils
         /// <returns></returns>
         public static string GenerateBase64String(this byte[] data)
         {
-            return Convert.ToBase64String(data, Base64FormattingOptions.None);
+            return Convert.ToBase64String(data);
         }
 
 
@@ -159,7 +169,7 @@ namespace Lustitia.Utils
         /// <returns></returns>
         public static byte[] GenerateMD5(this byte[] data)
         {
-            return new MD5CryptoServiceProvider().ComputeHash(data);
+            return MD5.Create().ComputeHash(data);
         }
 
 
@@ -168,7 +178,7 @@ namespace Lustitia.Utils
 
         public static byte[] GenerateSH1(this byte[] data)
         {
-            return new SHA1CryptoServiceProvider().ComputeHash(data);
+            return SHA1.Create().ComputeHash(data);
         }
 
 
@@ -305,7 +315,7 @@ namespace Lustitia.Utils
         {
             byte[] res = new byte[source.Length / 2];
             var characters = alphabet.ToCharArray();
-            
+
             unchecked
             {
                 for (int x = 0, i = 0; i < source.Length; i += 2, x += 1)
@@ -370,7 +380,8 @@ namespace Lustitia.Utils
 
 
 
-
+#if !NET_CORE
+        //Apparantly PasswordDeriveBytes are comming to net core so there is no point in replacing them
         public static CryptoStream Encrypt(Stream data, string key)
         {
             return Encrypt(data, key.GetBytes());
@@ -386,8 +397,7 @@ namespace Lustitia.Utils
 
             return new CryptoStream(data, encryptor, CryptoStreamMode.Read);
         }
-
-
+        
 
 
         public static CryptoStream Decrypt(Stream data, string key)
@@ -405,6 +415,7 @@ namespace Lustitia.Utils
 
             return new CryptoStream(data, encryptor, CryptoStreamMode.Read);
         }
+
 
 
 
@@ -470,6 +481,7 @@ namespace Lustitia.Utils
                 throw new Exception("Could not decrypt data!", err);
             }
         }
+#endif
 
 
         private static byte[] HexToBytes(string hex)
@@ -486,7 +498,7 @@ namespace Lustitia.Utils
         {
             byte[] encrypted;
 
-            using (var aes = new AesManaged())
+            using (var aes = Aes.Create())
             {
                 aes.Key = HexToBytes(key);
                 aes.IV = HexToBytes(iv);
@@ -514,7 +526,7 @@ namespace Lustitia.Utils
             var cipherBytes = Convert.FromBase64String(base64CipherText);
             string plainText;
 
-            using (var aes = new AesManaged())
+            using (var aes = Aes.Create())
             {
                 aes.Key = HexToBytes(key);
                 aes.IV = HexToBytes(iv);
@@ -537,6 +549,7 @@ namespace Lustitia.Utils
             return plainText;
         }
 
+#if !NET_CORE
         public static byte[] NotThrowingDecrypt(this byte[] data, string key, CipherMode mode = CipherMode.CBC)
         {
             return NotThrowingDecrypt(data, key.GetBytes(), mode);
@@ -574,7 +587,7 @@ namespace Lustitia.Utils
             return pdb.GetBytes(finalSize);
         }
 
-
+#endif
 
 
 
