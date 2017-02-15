@@ -1,0 +1,32 @@
+{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "debugType": "portable"
+  },
+  "dependencies": {
+    "Humanizer.Core": "2.1.0",
+    "Newtonsoft.Json": "9.0.1"
+  },
+  "frameworks": {
+     "netcoreapp1.1": {
+      //"imports": "dnxcore50",
+      "imports": "portable-net45",
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.1.0"
+        }
+      },
+      
+        "buildOptions": {
+          "define": [ "NET_CORE" ]
+        }
+    }
+    // ,
+    // "net46": {
+    //   "dependencies": {
+    //     "NETStandard.Library": "1.6.1"
+    //   }
+    // }
+  }
+}

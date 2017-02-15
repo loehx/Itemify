@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "debugType": "portable"
+  },
+  "dependencies": {
+    // "Newtonsoft.Json": "9.0.1",
+    "Humanizer.Core":"2.1.0",
+    "Npgsql":"3.1.8",
+    "Itemify.Shared":"1.0.0-*"
+  },
+  "frameworks": {
+     "netcoreapp1.1": {
+      //"imports": "dnxcore50",
+      "imports": "portable-net45",
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.1.0"
+        }
+      },
+      
+        "buildOptions": {
+          "define": [ "NET_CORE" ]
+        }
+    }
+    // ,
+    // "net46": {
+    //   "dependencies": {
+    //     "NETStandard.Library": "1.6.1"
+    //   }
+    // }
+  }
+}
