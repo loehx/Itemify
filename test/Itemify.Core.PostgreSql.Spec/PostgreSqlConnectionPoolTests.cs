@@ -2,15 +2,13 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Itemify.Core.PostgreSql.Exceptions;
-using Itemify.Logging;
 using Itemify.Shared.Logging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NUnit.Framework;
 using Assert = NUnit.Framework.Assert;
 
 namespace Itemify.Core.PostgreSql.Spec
 {
-    [TestClass()]
+    [TestFixture]
     public class PostgreSqlConnectionPoolTests
     {
         private ILogWriter logwriter;
@@ -40,7 +38,6 @@ namespace Itemify.Core.PostgreSql.Spec
         }
 
         [Test]
-        [ExpectedException(typeof(TimeoutException))]
         public void ConnectionPool_ConnectionMaxReached()
         {
             var connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 2, 1000);
