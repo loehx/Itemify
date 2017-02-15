@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Itemify.Core.ItemAccess;
 using Itemify.Core.Keywording;
 using Itemify.Core.PostgreSql.Entities;
 using Itemify.Core.Typing;
@@ -7,7 +8,7 @@ using Itemify.Shared.Utils;
 
 namespace Itemify.Core.Item
 {
-    public class ItemBase : IItem
+    public class ItemBase
     {
         private readonly ItemContext context;
         private readonly ItemEntity entity;
@@ -15,8 +16,8 @@ namespace Itemify.Core.Item
         private readonly bool isNew;
         private TypeSet subTypes;
 
-        public ItemCollection<IItemReference> Related { get; }
-        public ItemCollection<IItemReference> Children { get; }
+        protected ItemCollection<IItemReference> related { get; }
+        protected ItemCollection<IItemReference> children { get; }
 
         public int Revision => entity.Revision;
         public bool Debug => entity.Debug;
@@ -29,15 +30,14 @@ namespace Itemify.Core.Item
 
         public bool IsNew => isNew;
 
-        internal ItemBase(ItemContext context, ItemEntity entity, IItemReference parent, bool isNew, ItemCollection<IItemReference> related = null, ItemCollection<IItemReference> children = null)
+        internal ItemBase(ItemContext context, ItemEntity entity, IItemReference parent, bool isNew)
         {
             this.context = context;
             this.entity = entity;
             this.parent = parent;
             this.isNew = isNew;
-
-            Related = related ?? new ItemCollection<IItemReference>();
-            Children = children ?? new ItemCollection<IItemReference>();
+            this.related = new ItemCollection<IItemReference>();
+            this.children = new ItemCollection<IItemReference>();
         }
 
         public Guid Guid
@@ -146,6 +146,51 @@ namespace Itemify.Core.Item
             entity.Modified = now;
 
             return entity;
+        }
+
+        public override string ToString()
+        {
+            return $"{Name} <{Type.Name}:{Type.Value}> ({(IsNew ? "NEW" : "REV:" + Revision)})";
+        }
+
+        public override bool Equals(object obj)
+        {
+            var item = obj as IItem;
+            if (item != null)
+                return Equals(item);
+
+            return false;
+        }
+
+        public bool Equals(IItem item)
+        {
+            return item.Guid == Guid && item.Type.Equals(Type);
+        }
+
+        public override int GetHashCode()
+        {
+            return Guid.GetHashCode() ^ Type.GetHashCode();
+        }
+
+        public int CompareTo(object obj)
+        {
+            var item = obj as IItem;
+            if (item != null)
+            {
+                if (IsNew && item.IsNew)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return Created.CompareTo(item.Created);
+                }
+            }
+
+            if (obj is ItemReference)
+                return -1;
+
+            return 0;
         }
     }
 }

@@ -44,6 +44,11 @@ namespace Itemify.Core.Typing
             return false;
         }
 
+        public bool Equals(Enum e)
+        {
+            return true;
+        }
+
         public bool Equals(string obj)
         {
             return obj.Equals(Inner.Value, StringComparison.OrdinalIgnoreCase);

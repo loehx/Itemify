@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Itemify.Core.Typing;
 
 namespace Itemify.Core.Item
@@ -14,8 +15,8 @@ namespace Itemify.Core.Item
         bool IsNew { get; }
         bool IsParentResolved { get; }
         IItemReference Parent { get; }
-        ItemCollection<IItemReference> Children { get; }
-        ItemCollection<IItemReference> Related { get; }
+        IReadOnlyCollection<IItemReference> Children { get; }
+        IReadOnlyCollection<IItemReference> Related { get; }
         Guid Guid { get; }
         TypeItem Type { get; }
         string Name { get; set; }

@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 
 namespace Itemify.Core.Item
 {
-    public class ItemCollection<T> : IList<T>
+    public class ItemCollection<T> : IList<T>, IReadOnlyCollection<T>
         where T: IItemReference
     {
         private List<T> inner { get; }
@@ -28,11 +28,13 @@ namespace Itemify.Core.Item
         public void Add(T item)
         {
             inner.Add(item);
+            inner.Sort();
         }
 
         public void AddRange(IEnumerable<T> collection)
         {
             inner.AddRange(collection);
+            inner.Sort();
         }
 
         public ReadOnlyCollection<T> AsReadOnly()

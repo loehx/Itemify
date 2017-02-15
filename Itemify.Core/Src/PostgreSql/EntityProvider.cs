@@ -37,6 +37,12 @@ namespace Itemify.Core.PostgreSql
             return postgreSql.Insert(tableName, entity, false);
         }
 
+        public IEnumerable<Guid> Insert(string tableName, IEnumerable<ItemEntity> entities)
+        {
+            tableName = resolveTable<ItemEntity>(tableName);
+            return postgreSql.BulkInsert(tableName, entities);
+        }
+
         public void InsertItemRelations(string tableName, Guid guid,
             IEnumerable<KeyValuePair<Guid, string>> targetItems, string mappingTableName, bool overwrite)
         {
