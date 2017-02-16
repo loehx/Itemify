@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Itemify.Core.Item
 {
@@ -67,12 +68,10 @@ namespace Itemify.Core.Item
             return inner.Contains(item);
         }
 
-#if !NET_CORE //TODO:actiual migration
-        public List<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
+        public List<TOutput> ConvertAll<TOutput>(Func<T, TOutput> converter)
         {
-            return inner.ConvertAll(converter);
+            return inner.Select(converter).ToList();
         }
-#endif
 
         public void CopyTo(T[] array)
         {

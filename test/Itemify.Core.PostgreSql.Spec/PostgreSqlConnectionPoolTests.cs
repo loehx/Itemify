@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Itemify.Core.PostgreSql.Exceptions;
+using Itemify.Logging;
 using Itemify.Shared.Logging;
 using NUnit.Framework;
 using Assert = NUnit.Framework.Assert;
