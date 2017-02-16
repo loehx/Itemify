@@ -33,5 +33,21 @@ namespace Itemify.Core.ItemAccess
             return Guid.GetHashCode();
         }
 
+        public int CompareTo(object obj)
+        {
+            var item = obj as IItem;
+            if (item != null)
+                return -1;
+
+            var reference = obj as IItemReference;
+            if (reference != null)
+            {
+                var r = string.Compare(reference.Type.Name, Type.Name, StringComparison.Ordinal);
+                if (r == 0)
+                    return string.Compare(reference.Type.Value, Type.Value, StringComparison.Ordinal);
+            }
+
+            return 0;
+        }
     }
 }

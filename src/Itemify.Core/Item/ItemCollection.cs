@@ -2,10 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Itemify.Core.Item
 {
-    public class ItemCollection<T> : IList<T>
+    public class ItemCollection<T> : IList<T>, IReadOnlyCollection<T>
         where T: IItemReference
     {
         private List<T> inner { get; }
@@ -28,11 +29,13 @@ namespace Itemify.Core.Item
         public void Add(T item)
         {
             inner.Add(item);
+            inner.Sort();
         }
 
         public void AddRange(IEnumerable<T> collection)
         {
             inner.AddRange(collection);
+            inner.Sort();
         }
 
         public ReadOnlyCollection<T> AsReadOnly()
@@ -65,12 +68,10 @@ namespace Itemify.Core.Item
             return inner.Contains(item);
         }
 
-#if !NET_CORE //TODO:actiual migration
-        public List<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
+        public List<TOutput> ConvertAll<TOutput>(Func<T, TOutput> converter)
         {
-            return inner.ConvertAll(converter);
+            return inner.Select(converter).ToList();
         }
-#endif
 
         public void CopyTo(T[] array)
         {

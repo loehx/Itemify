@@ -3,72 +3,74 @@ using System.Data;
 using Itemify.Core.Exceptions;
 using Itemify.Core.Typing;
 using Itemify.Spec.Example_A.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace Itemify.Spec
 {
-    [TestClass]
+    [TestFixture]
     public class RegisterTests
     {
-        [TestMethod]
+        [Test]
         public void DeviceTypes()
         {
             new TypeManager().Register<DeviceType>();
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(MissingCustomAttribute))]
+        [Test]
         public void DeviceTypesMissingDefinitionAttribute()
         {
-            new TypeManager().Register<DeviceTypesMissingDefinitionAttribute>();
+            Assert.Throws<MissingCustomAttribute>(
+                () => new TypeManager().Register<DeviceTypesMissingDefinitionAttribute>());
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(MissingCustomAttribute))]
+        [Test]
         public void DeviceTypesMissingSingleTypeValueAttribute()
         {
-            new TypeManager().Register<DeviceTypesMissingSingleTypeValueAttribute>();
+            Assert.Throws<MissingCustomAttribute>(
+                () => new TypeManager().Register<DeviceTypesMissingSingleTypeValueAttribute>());
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(DuplicateNameException))]
+        [Test]
         public void DeviceTypesDuplicateTypeValue()
         {
-            new TypeManager().Register<DeviceTypesDuplicateTypeValue>();
+            Assert.Throws<Exception>(
+                () => new TypeManager().Register<DeviceTypesDuplicateTypeValue>());
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void PassingANonEnumToRegister()
         {
-            new TypeManager().Register<NoEnum>();
+            Assert.Throws<ArgumentException>(
+                () => new TypeManager().Register<NoEnum>());
         }
 
         private struct NoEnum
         {
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(Exception))]
+        [Test]
         public void RegisterSameDefinitionTwice()
         {
-            var tm = new TypeManager();
-            tm.Register<DeviceType>();
-            tm.Register<DeviceType>();
+            Assert.Throws<Exception>(() =>
+                {
+                    var tm = new TypeManager();
+                    tm.Register<DeviceType>();
+                    tm.Register<DeviceType>();
+                });
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void DeviceTypesContainingIllegalCharacters()
         {
-            new TypeManager().Register<DeviceTypesContainingIllegalCharacters>();
+            Assert.Throws<ArgumentException>(
+                () => new TypeManager().Register<DeviceTypesContainingIllegalCharacters>());
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void DeviceTypesContainingIllegalCharacters2()
         {
-            new TypeManager().Register<DeviceTypesContainingIllegalCharacters2>();
+            Assert.Throws<ArgumentException>(
+                () => new TypeManager().Register<DeviceTypesContainingIllegalCharacters2>());
         }
     }
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Itemify</id>
+    <version>1.0.0</version>
+    <authors>Alexander Löhn</authors>
+    <owners>Alexander Löhn</owners>
+    <licenseUrl>https://github.com/loehx/Itemify</licenseUrl>
+    <projectUrl>https://github.com/loehx/Itemify</projectUrl>
+    <iconUrl>https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/00/00bd2dce949ad260649686854b894ce7c4c6683f_full.jpg</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Abstract data access layer and underlying connectors to several databases, such as PostgreSQL.</description>
+    <copyright>Copyright 2017 Alexander Löhn</copyright>
+    <tags>Database Item Data Store Itemify</tags>
+    <dependencies>
+    </dependencies>
+  </metadata>
+</package>

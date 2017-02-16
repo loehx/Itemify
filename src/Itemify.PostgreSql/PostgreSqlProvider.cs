@@ -359,7 +359,6 @@ namespace Itemify.Core.PostgreSql
             if (pk == null)
             {
                 var affected = db.Execute(query.ToString(), values);
-                Debug.Assert(affected == 1);
 
                 return new object[0];
             }

@@ -1,23 +1,23 @@
 ﻿using System;
 using Itemify.Core.Typing;
 using Itemify.Spec.Example_A.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace Itemify.Spec
 {
-    [TestClass]
+    [TestFixture]
     public class TypeSetTests
     {
         private TypeManager typeManager;
 
-        [TestInitialize]
+        [SetUp]
         public void BeforeEach()
         {
             typeManager = new TypeManager();
             typeManager.Register<DeviceType>();
         }
 
-        [TestMethod]
+        [Test]
         public void TypeSetTest()
         {
             var a = typeManager.GetTypeSet(DeviceType.Sensor);
@@ -26,14 +26,13 @@ namespace Itemify.Spec
             Assert.AreNotEqual(a, b);
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(Exception))]
+        [Test]
         public void TypeSetFromUnregisteredEnum()
         {
-            typeManager.GetTypeSet(DeviceTypesDuplicateTypeValue.Sensor);
+            Assert.Throws<Exception>(() => typeManager.GetTypeSet(DeviceTypesDuplicateTypeValue.Sensor));
         }
 
-        [TestMethod]
+        [Test]
         public void TypeSetSerialization()
         {
             var set = typeManager.GetTypeSet(DeviceType.Sensor);

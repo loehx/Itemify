@@ -8,14 +8,14 @@ using Itemify.Core.PostgreSql;
 using Itemify.Core.Typing;
 using Itemify.Logging;
 using Itemify.Shared.Logging;
+using Itemify.Shared.Utils;
 using Itemify.Spec.Example_A.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NUnit.Framework;
 using Assert = NUnit.Framework.Assert;
 
 namespace Itemify.Core.Spec
 {
-    [TestClass()]
+    [TestFixture]
     public class ItemProviderTests
     {
         private const string SCHEMA = "spec";
@@ -478,21 +478,21 @@ namespace Itemify.Core.Spec
         }
 
         [Test]
-        [ExpectedException(typeof(ItemNotFoundException))]
+        //[ExpectedException(typeof(ItemNotFoundException))]
         public void SetRelation_ToNotExistingItem()
         {
             throw new NotImplementedException();
         }
 
         [Test]
-        [ExpectedException(typeof(Exception))]
+        //[ExpectedException(typeof(Exception))]
         public void SetRelation_ToSameItem()
         {
             throw new NotImplementedException();
         }
 
         [Test]
-        [ExpectedException(typeof(Exception))]
+        //[ExpectedException(typeof(Exception))]
         public void SetRelation_ToRootItem()
         {
             throw new NotImplementedException();
@@ -530,7 +530,6 @@ namespace Itemify.Core.Spec
         }
 
         [Test]
-        [ExpectedException(typeof(ItemNotFoundException))]
         public void SaveAndGetNewItem_WithNotExistingRelation()
         {
             throw new NotImplementedException();
@@ -569,7 +568,6 @@ namespace Itemify.Core.Spec
         }
 
         [Test]
-        [ExpectedException(typeof(ItemNotFoundException))]
         public void SaveAndGetExistingItem_WithNotExistingRelation()
         {
             throw new NotImplementedException();
@@ -607,9 +605,28 @@ namespace Itemify.Core.Spec
             var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
             var child = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
 
-            item.Children.Add(child);
-
             provider.SaveNew(item);
+            provider.SaveNew(child);
+
+            var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
+
+            Assert.AreEqual(1, actual.Children.Count);
+            Assert.AreEqual(item.Children.First().Guid, actual.Children.First().Guid);
+            Assert.AreEqual(item.Children.First().Type, actual.Children.First().Type);
+
+            var rootChildren = provider.GetChildrenOfItemByReference(provider.Root, SensorType.Temperature, DeviceType.Sensor).ToArray();
+            Assert.AreEqual(2, rootChildren.Length);
+            Assert.AreEqual(1, rootChildren.Count(k => k.Type.Equals(DeviceType.Sensor)));
+            Assert.AreEqual(1, rootChildren.Count(k => k.Type.Equals(SensorType.Temperature)));
+        }
+
+        [Test]
+        public void SaveAndGetNewItem_WithExistingChild()
+        {
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
+            var child = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+
+            provider.SaveNew(child);
 
             var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
 
@@ -619,36 +636,56 @@ namespace Itemify.Core.Spec
         }
 
         [Test]
-        public void SaveAndGetNewItem_WithExistingChild()
-        {
-            throw new NotImplementedException();
-        }
-
-        [Test]
-        [ExpectedException(typeof(ItemNotFoundException))]
-        public void SaveAndGetNewItem_WithNotExistingChild()
-        {
-            throw new NotImplementedException();
-        }
-
-        [Test]
         public void SaveAndGetNewItem_WithNewChildren()
         {
-            throw new NotImplementedException();
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
+
+            var childA = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+            var childB = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+            var childC = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+
+            provider.SaveNew(item);
+            new[] {childA, childB, childC}.ForEach(k => provider.SaveNew(k));
+
+            var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
+
+            Assert.AreEqual(3, actual.Children.Count);
+            Assert.AreEqual(item.Children.Skip(0).First().Guid, actual.Children.Skip(0).First().Guid);
+            Assert.AreEqual(item.Children.Skip(0).First().Guid, actual.Children.Skip(0).First().Guid);
+
+            Assert.AreEqual(item.Children.Skip(1).First().Guid, actual.Children.Skip(1).First().Guid);
+            Assert.AreEqual(item.Children.Skip(1).First().Guid, actual.Children.Skip(1).First().Guid);
+
+            Assert.AreEqual(item.Children.Skip(2).First().Guid, actual.Children.Skip(2).First().Guid);
+            Assert.AreEqual(item.Children.Skip(2).First().Guid, actual.Children.Skip(2).First().Guid);
         }
+
 
         [Test]
-        public void SaveAndGetNewItem_WithExistingChildren()
+        public void SaveAndGetNewItem_WithNewChildren_Implicit()
         {
-            throw new NotImplementedException();
+            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
+            provider.SaveNew(item);
+
+            var childA = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+            var childB = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+            var childC = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+
+            new[] { childA, childB, childC }.ForEach(k => provider.SaveNew(k));
+
+            var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
+
+            Assert.AreEqual(3, actual.Children.Count);
+            Assert.AreEqual(item.Children.Skip(0).First().Guid, actual.Children.Skip(0).First().Guid);
+            Assert.AreEqual(item.Children.Skip(0).First().Guid, actual.Children.Skip(0).First().Guid);
+
+            Assert.AreEqual(item.Children.Skip(1).First().Guid, actual.Children.Skip(1).First().Guid);
+            Assert.AreEqual(item.Children.Skip(1).First().Guid, actual.Children.Skip(1).First().Guid);
+
+            Assert.AreEqual(item.Children.Skip(2).First().Guid, actual.Children.Skip(2).First().Guid);
+            Assert.AreEqual(item.Children.Skip(2).First().Guid, actual.Children.Skip(2).First().Guid);
         }
 
-
-        [Test]
-        public void SaveAndGetNewItem_WithExistingAndNewChildren()
-        {
-            throw new NotImplementedException();
-        }
 
 
         [Test]
@@ -664,7 +701,6 @@ namespace Itemify.Core.Spec
         }
 
         [Test]
-        [ExpectedException(typeof(ItemNotFoundException))]
         public void SaveAndGetExistingItem_WithNotExistingChild()
         {
             throw new NotImplementedException();

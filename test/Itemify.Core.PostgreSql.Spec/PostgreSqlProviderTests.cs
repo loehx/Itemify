@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using Itemify.Core.PostgreSql.Exceptions;
+using Itemify.Logging;
+using Itemify.Shared.Utils;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 

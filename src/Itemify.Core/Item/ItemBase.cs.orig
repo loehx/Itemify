@@ -1,7 +1,10 @@
 ﻿using System;
+<<<<<<< HEAD:Itemify.Core/Src/Item/ItemBase.cs
 using System.Collections;
 using Itemify.Core.ItemAccess;
 using Itemify.Core.Keywording;
+=======
+>>>>>>> origin/master:src/Itemify.Core/Item/ItemBase.cs
 using Itemify.Core.PostgreSql.Entities;
 using Itemify.Core.Typing;
 using Itemify.Shared.Utils;
