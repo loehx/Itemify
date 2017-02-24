@@ -1,34 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Humanizer;
-using Itemify.Shared.Logging;
 using Itemify.Shared.Utils;
 
 namespace Itemify.Logging
 {
+
+
     public class RegionBasedLogWriter : ILogWriter
     {
         private readonly ILogData log;
         private readonly string region;
         private readonly int level;
-        private readonly int bufferSize;
         private readonly Stopwatch stopwatch;
 
-        private List<RegionBasedLogWriter> subRegions = null;
-        private List<LogEntry> buffer;
-        private object syncRoot = new object();
+        private ConcurrentBag<RegionBasedLogWriter> subRegions = null;
         private Stopwatch totalStopwatch;
 
-        public RegionBasedLogWriter(ILogData log, string region, int bufferSize = 256)
-            : this(log, region, bufferSize, 0)
+        public RegionBasedLogWriter(ILogData log, string region)
+            : this(new SynchronizedLogDataWrapper(log), region, 0)
         {
         }
 
-        private RegionBasedLogWriter(ILogData log, string region, int bufferSize, int level)
+        private RegionBasedLogWriter(ILogData log, string region, int level, object sharedSyncRoot = null)
         {
             if (log == null) throw new ArgumentNullException(nameof(log));
             if (region == null) throw new ArgumentNullException(nameof(region));
@@ -36,10 +33,9 @@ namespace Itemify.Logging
             this.log = log;
             this.region = formatRegionName(region);
             this.level = Math.Abs(level);
-            this.bufferSize = bufferSize;
             stopwatch = new Stopwatch();
             totalStopwatch = new Stopwatch();
-            this.buffer = new List<LogEntry>(bufferSize);
+            subRegions = new ConcurrentBag<RegionBasedLogWriter>();
         }
 
         public ILogWriter Describe(string description)
@@ -69,67 +65,30 @@ namespace Itemify.Logging
         public ILogWriter NewRegion(string pascalCaseName)
         {
             if (pascalCaseName == null) throw new ArgumentNullException(nameof(pascalCaseName));
-            Flush();
 
             pascalCaseName = formatRegionName(pascalCaseName);
-            var subRegion = new RegionBasedLogWriter(log, region + "." + pascalCaseName, bufferSize, level + 1);
+            var subRegion = new RegionBasedLogWriter(log, region + "." + pascalCaseName, level + 1);
 
             if (stopwatch.IsRunning)
                 subRegion.StartStopwatch();
-
-            if (subRegions == null)
-                subRegions = new List<RegionBasedLogWriter>();
 
             subRegions.Add(subRegion);
 
             return subRegion;
         }
 
-        public void Flush()
-        {
-            subRegions?.ForEach(k => k.flush());
-
-            if (buffer.Count == 0)
-                return;
-
-            lock (syncRoot)
-            {
-                flush();
-            }
-        }
-        public async Task FlushAsync()
-        {
-            await Task.Yield();
-            Flush();
-        }
 
         protected void write(string message, string description)
         {
-            stopwatch.Stop();
-            var entry = new LogEntry(region, 
-                message?.Trim(), 
-                description?.Trim(), 
-                stopwatch.ElapsedMilliseconds, 
-                level, 
-                DateTime.Now, 
+            var entry = new LogEntry(region,
+                message?.Trim(),
+                description?.Trim(),
+                stopwatch.ElapsedMilliseconds,
+                level,
+                DateTime.Now,
                 Thread.CurrentThread.ManagedThreadId);
 
-            lock (syncRoot)
-            {
-                this.buffer.Add(entry);
-
-                if (buffer.Count >= bufferSize)
-                    flush();
-            }
-
-            stopwatch.Restart();
-        }
-
-        protected void flush()
-        {
-            var b = buffer;
-            buffer = new List<LogEntry>(bufferSize);
-            log.AddRange(b);
+                log.Add(entry);
         }
 
         private static string formatRegionName(string regionName)
@@ -174,7 +133,6 @@ namespace Itemify.Logging
             }
 
             subRegions?.ForEach(k => k.Dispose());
-            Flush();
         }
     }
 

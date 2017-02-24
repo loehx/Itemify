@@ -7,7 +7,7 @@ using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql;
 using Itemify.Core.PostgreSql.Entities;
 using Itemify.Core.Typing;
-using Itemify.Shared.Logging;
+using Itemify.Logging;
 
 namespace Itemify.Core
 {
@@ -21,7 +21,22 @@ namespace Itemify.Core
 
         public IItemReference Root => new ItemReference(Guid.Empty, context.TypeManager.GetTypeItem(DefaultTypes.Root));
 
-        internal ItemProvider(EntityProvider provider, TypeManager typeManager, ILogWriter log)
+
+        public ItemProvider(ItemProviderSettings settings, TypeManager typeManager, ILogWriter log)
+        {
+            var entityProviderLog = log.NewRegion(nameof(EntityProvider));
+            var pool = new PostgreSqlConnectionPool(settings.PostgreSqlConnectionString, settings.MaxConnections, settings.Timeout);
+            var sqlProvider = new PostgreSqlProvider(pool, entityProviderLog.NewRegion("PostgreSQL"), settings.Schema);
+            sqlProvider.EnsureSchemaExists();
+
+            this.provider = new EntityProvider(sqlProvider, entityProviderLog);
+            this.log = log;
+            this.context = new ItemContext(typeManager);
+        }
+
+
+        // TODO: Make internal
+        public ItemProvider(EntityProvider provider, TypeManager typeManager, ILogWriter log)
         {
             this.provider = provider;
             this.log = log;
@@ -181,43 +196,5 @@ namespace Itemify.Core
                 log.Describe($"Resolved {children.Length} children of type: {type}.");
             }
         }
-    }
-
-    public class ItemResolving
-    {
-        private List<Enum> children;
-        private List<Enum> relations;
-
-        internal ItemResolving()
-        {
-        }
-
-        public bool Empty => children == null && relations == null;
-        public IEnumerable<Enum> ChildrenTypes => children ?? Enumerable.Empty<Enum>();
-        public IEnumerable<Enum> RelationsTypes => relations ?? Enumerable.Empty<Enum>();
-
-
-        public ItemResolving ChildrenOfType(params Enum[] types)
-        {
-            if (children == null)
-                children = new List<Enum>(types.Length);
-
-            children.AddRange(types);
-
-            return this;
-        }
-
-        public ItemResolving RelatedItemsOfType(params Enum[] types)
-        {
-            if (relations == null)
-                relations = new List<Enum>(types.Length);
-
-            relations.AddRange(types);
-
-            return this;
-        }
-
-
-        public static ItemResolving Default => new ItemResolving();
     }
 }

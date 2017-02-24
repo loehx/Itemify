@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using Itemify.Core.Exceptions;
 using Itemify.Core.PostgreSql.Entities;
-using Itemify.Shared.Logging;
+using Itemify.Logging;
 
 namespace Itemify.Core.PostgreSql
 {
-    internal class EntityProvider
+    // TODO: Make internal
+    public class EntityProvider
     {
         private PostgreSqlProvider postgreSql;
         private readonly ILogWriter log;
         private readonly SortedSet<string> tables = new SortedSet<string>();
 
-        internal EntityProvider(PostgreSqlProvider postgreSql, ILogWriter log)
+        public EntityProvider(PostgreSqlProvider postgreSql, ILogWriter log)
         {
             this.postgreSql = postgreSql;
             this.log = log;

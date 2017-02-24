@@ -54,7 +54,7 @@ namespace Itemify.Core.Item
 
         public string Name
         {
-            get { return string.IsNullOrEmpty(entity.Name) ? Type.Name : entity.Name; }
+            get { return string.IsNullOrEmpty(entity.Name) ? "[" + Type.Value + "]" : entity.Name; }
             set { entity.Name = value ?? ""; }
         }
 

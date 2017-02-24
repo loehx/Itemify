@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Core.PostgreSql.Util;
-using Itemify.Shared.Logging;
+using Itemify.Logging;
 using Itemify.Shared.Utils;
 using Npgsql;
 

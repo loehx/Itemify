@@ -3,15 +3,17 @@
   "buildOptions": {
     "debugType": "portable"
   },
+  "testRunner": "nunit-teamcity",
   "dependencies": {
     "Newtonsoft.Json": "9.0.1",
-    "Npgsql":"3.1.8",
-    "NUnit":"3.6.0",
-    "Itemify.Shared":"1.0.0-*",
-    "Itemify":"1.0.0-*"
+    "Npgsql": "3.1.8",
+    "NUnit": "3.6.0",
+    "Itemify.Shared": "1.0.0-*",
+    "Itemify": "1.0.0-*",
+    "dotnet-test-nunit-teamcity": "3.4.0-beta-3"
   },
   "frameworks": {
-     "netcoreapp1.1": {
+    "netcoreapp1.1": {
       //"imports": "dnxcore50",
       "imports": "portable-net45",
       "dependencies": {
@@ -20,10 +22,10 @@
           "version": "1.1.0"
         }
       },
-      
-        "buildOptions": {
-          "define": [ "NET_CORE" ]
-        }
+
+      "buildOptions": {
+        "define": [ "NET_CORE" ]
+      }
     }
     // ,
     // "net46": {
