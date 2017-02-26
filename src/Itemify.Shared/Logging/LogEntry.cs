@@ -1,9 +1,8 @@
 using System;
-using Itemify.Shared.Logging;
 
 namespace Itemify.Logging
 {
-    public class LogEntry : ILogEntry
+    public class LogEntry
     {
         public LogEntry(string region, string message, string description, long milliseconds, int level, DateTime timestamp, int threadId)
         {

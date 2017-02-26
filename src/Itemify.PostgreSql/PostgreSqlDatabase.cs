@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Itemify.Shared.Logging;
+using Itemify.Logging;
 using Npgsql;
 
 namespace Itemify.Core.PostgreSql

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Logging;
@@ -21,8 +22,8 @@ namespace Itemify.Core.PostgreSql.Spec
         [SetUp]
         public void BeforeEach()
         {
-            var log = new DebugLogData();
-            var logwriter = new RegionBasedLogWriter(log, nameof(PostgreSqlProviderTests), 0);
+            var log = new CustomLogData(l => Debug.WriteLine(l));
+            var logwriter = new RegionBasedLogWriter(log, nameof(PostgreSqlProviderTests));
             logwriter.StartStopwatch();
 
             provider = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);

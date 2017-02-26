@@ -3,6 +3,7 @@ using System.Diagnostics;
 
 namespace Itemify.Logging
 {
+    [Obsolete("Please use CustomLogData instead.", true)]
     public class DebugLogData : CustomLogData
     {
         public DebugLogData(int tabSize = 4)

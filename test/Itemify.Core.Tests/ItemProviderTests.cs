@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Itemify.Core.Exceptions;
 using Itemify.Core.Item;
@@ -7,7 +8,6 @@ using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql;
 using Itemify.Core.Typing;
 using Itemify.Logging;
-using Itemify.Shared.Logging;
 using Itemify.Shared.Utils;
 using Itemify.Spec.Example_A.Types;
 using NUnit.Framework;
@@ -36,8 +36,8 @@ namespace Itemify.Core.Spec
         [SetUp]
         public void BeforeEach()
         {
-            var log = new DebugLogData();
-            logwriter = new RegionBasedLogWriter(log, "Spec", 0);
+            var log = new CustomLogData(l => Debug.WriteLine(l));
+            logwriter = new RegionBasedLogWriter(log, "Spec");
             sqlProvider = new PostgreSqlProvider(connectionPool, logwriter.NewRegion(nameof(PostgreSqlProvider)), SCHEMA);
             sqlProvider.EnsureSchemaExists();
 

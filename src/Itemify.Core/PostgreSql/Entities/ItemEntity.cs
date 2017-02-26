@@ -2,8 +2,8 @@
 
 namespace Itemify.Core.PostgreSql.Entities
 {
-
-    internal class ItemEntity : IGloballyUniqueEntity
+    // TODO: Make internal
+    public class ItemEntity : IGloballyUniqueEntity
     {
         [PostgreSqlColumn(primaryKey: true)]
         public Guid Guid { get; set; }

@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<test-run id="0" testcasecount="1" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" result="Failed" portable-engine-version="3.3.0.0" start-time="2017-02-24 14:17:10Z" end-time="2017-02-24 14:17:10Z" duration="0.195327">
+  <test-run id="0" testcasecount="1" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" result="Failed" portable-engine-version="3.3.0.0" start-time="2017-02-24 14:17:10Z" end-time="2017-02-24 14:17:10Z" duration="0.112268">
+    <test-suite type="Assembly" id="1002" name="Itemify.Spec.dll" fullname="C:/Alex/Projekte/Itemify/test/Itemify.Spec/bin/Debug/netcoreapp1.1/Itemify.Spec.dll" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2017-02-24 14:17:10Z" end-time="2017-02-24 14:17:10Z" duration="0.089028" total="1" passed="0" failed="1" warnings="0" inconclusive="0" skipped="0" asserts="0">
+      <environment framework-version="3.6.0.0" clr-version=".NET Core 4.6.24628.01" os-version="Microsoft Windows 10.0.14393 " cwd="C:\Alex\Projekte\Itemify" machine-name="ALEX" culture="de-DE" uiculture="de-DE" os-architecture="X64" />
+      <settings>
+        <setting name="WorkDirectory" value="C:\Alex\Projekte\Itemify" />
+      </settings>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1003" name="Itemify" fullname="Itemify" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2017-02-24 14:17:10Z" end-time="2017-02-24 14:17:10Z" duration="0.081752" total="1" passed="0" failed="1" warnings="0" inconclusive="0" skipped="0" asserts="0">
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestFixture" id="1000" name="BuildingStructureTest" fullname="Itemify.BuildingStructureTest" classname="Itemify.BuildingStructureTest" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2017-02-24 14:17:10Z" end-time="2017-02-24 14:17:10Z" duration="0.078449" total="1" passed="0" failed="1" warnings="0" inconclusive="0" skipped="0" asserts="0">
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-case id="1001" name="Szenario_A" fullname="Itemify.BuildingStructureTest.Szenario_A" methodname="Szenario_A" classname="Itemify.BuildingStructureTest" runstate="Runnable" seed="1626106924" result="Failed" label="Error" start-time="2017-02-24 14:17:10Z" end-time="2017-02-24 14:17:10Z" duration="0.043706" asserts="0">
+            <failure>
+              <message><![CDATA[Itemify.Core.Exceptions.MissingCustomAttribute : Enum field 'EntityTypes Room' in type 'EntityTypes' is missing a custom attribute of type: TypeValueAttribute]]></message>
+              <stack-trace><![CDATA[   at Itemify.Core.Typing.TypeDefinition.<GetItems>d__8.MoveNext() in C:\Alex\Projekte\Itemify\src\Itemify.Core\Typing\TypeDefinition.cs:line 45
+   at System.Collections.Generic.List`1..ctor(IEnumerable`1 collection)
+   at System.Linq.Enumerable.ToList[TSource](IEnumerable`1 source)
+   at Itemify.Core.Typing.TypeDefinition..ctor(TypeDefinitionAttribute attr, Type type) in C:\Alex\Projekte\Itemify\src\Itemify.Core\Typing\TypeDefinition.cs:line 28
+   at Itemify.Core.Typing.TypeManager.Register(Type type) in C:\Alex\Projekte\Itemify\src\Itemify.Core\Typing\TypeManager.cs:line 40
+   at Itemify.Core.Typing.TypeManager.Register[T]() in C:\Alex\Projekte\Itemify\src\Itemify.Core\Typing\TypeManager.cs:line 25
+   at Itemify.ItemifySettings.Register[T]() in C:\Alex\Projekte\Itemify\src\Itemify\ItemifySettings.cs:line 52
+   at Itemify.BuildingStructureTest.Setup() in C:\Alex\Projekte\Itemify\test\Itemify.Spec\Integration\BuildingStructureTest.cs:line 32]]></stack-trace>
+            </failure>
+          </test-case>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-run>
+</test-run>

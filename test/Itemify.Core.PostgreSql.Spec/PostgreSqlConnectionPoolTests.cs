@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Logging;
-using Itemify.Shared.Logging;
 using NUnit.Framework;
 using Assert = NUnit.Framework.Assert;
 
@@ -21,8 +21,8 @@ namespace Itemify.Core.PostgreSql.Spec
 
         public PostgreSqlConnectionPoolTests()
         {
-            var log = new DebugLogData();
-            logwriter = new RegionBasedLogWriter(log, nameof(PostgreSqlConnectionPoolTests), 0);
+            var log = new CustomLogData(l => Debug.WriteLine(l));
+            logwriter = new RegionBasedLogWriter(log, nameof(PostgreSqlConnectionPoolTests));
         }
 
 
