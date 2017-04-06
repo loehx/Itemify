@@ -23,12 +23,12 @@ namespace Itemify
             this.provider = new ItemProvider(settings.GetProviderSettings(), this.typeManager, log);
         }
 
-        internal IItem NewItem(Enum type)
+        public IItem NewItem(Enum type)
         {
             return NewItem(provider.Root, type);
         }
 
-        internal IItem NewItem(IItemReference parent, Enum type)
+        public IItem NewItem(IItemReference parent, Enum type)
         {
             var typeItem = typeManager.GetTypeItem(type);
             return provider.NewItem(parent, typeItem);
