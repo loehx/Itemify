@@ -2,16 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Itemify.Core.Item;
 
 namespace Itemify
 {
     public static class ItemExtensions
     {
-        public static T Wrap<T>(this IItem item)
+        public static T Wrap<T>(this Item item)
         {
-            return (T)Activator.CreateInstance(typeof(T), item);
-        }
+            if (item == null)
+                return default(T);
 
+            try
+            {
+                return (T) Activator.CreateInstance(typeof(T), item);
+            }
+            catch (Exception err)
+            {
+                throw new Exception($"Could not wrap item with class: \"{typeof(T)}\"", err);
+            }
+        }
     }
 }

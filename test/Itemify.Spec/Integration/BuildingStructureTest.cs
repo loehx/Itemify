@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Itemify.Core.Item;
-using Itemify.Core.Typing;
 using Itemify.Logging;
 using Newtonsoft.Json;
 using NUnit.Framework.Internal;
@@ -29,7 +28,6 @@ namespace Itemify
             this.log = new RegionBasedLogWriter(logData, nameof(BuildingStructureTest));
 
             var settings = new ItemifySettings("Server=127.0.0.1;Port=5432;Database=itemic;User Id=postgres;Password=abc;");
-            settings.Register<EntityTypes>();
 
             this.itemify = new Itemify(settings, this.log);
         }
@@ -38,7 +36,7 @@ namespace Itemify
         [Test]
         public void Szenario_A()
         {
-            var locationItem = this.itemify.NewItem(EntityTypes.Location);
+            var locationItem = new Item(EntityTypes.Location);
             var location = new Coords(locationItem);
 
             location.Latitude = 54.342432;
@@ -62,24 +60,18 @@ namespace Itemify
 
 
 
-        [TypeDefinition("entities")]
-        public enum EntityTypes
+        public class EntityTypes
         {
-            [TypeValue("building")]
-            Building,
-
-            [TypeValue("room")]
-            Room,
-
-            [TypeValue("location")]
-            Location
+            public static string Building => "Building";
+            public static string Room => "Room";
+            public static string Location => "Location";
         }
 
 
 
         public Coords CreateLocation(double lat, double lng)
         {
-            var location = this.itemify.NewItem(EntityTypes.Location);
+            var location = new Item(EntityTypes.Location);
             var coords = new Coords(location);
 
             coords.Latitude = lat;
@@ -98,16 +90,16 @@ namespace Itemify
 
         public class Coords
         {
-            private readonly IItem item;
+            private readonly Item item;
             private KeyValuePair<double, double> body;
 
-            public Coords(IItem item)
+            public Coords(Item item)
             {
                 this.item = item;
                 this.body = item.TryGetBody<KeyValuePair<double, double>>();
             }
 
-            internal IItem GetItem()
+            internal Item GetItem()
             {
                 item.SetBody(body);
                 return item;

@@ -6,32 +6,32 @@ namespace Itemify.Core
 {
     public class ItemResolving
     {
-        private List<Enum> children;
-        private List<Enum> relations;
+        private List<string> children;
+        private List<string> relations;
 
         internal ItemResolving()
         {
         }
 
         public bool Empty => children == null && relations == null;
-        public IEnumerable<Enum> ChildrenTypes => children ?? Enumerable.Empty<Enum>();
-        public IEnumerable<Enum> RelationsTypes => relations ?? Enumerable.Empty<Enum>();
+        public IEnumerable<string> ChildrenTypes => children ?? Enumerable.Empty<string>();
+        public IEnumerable<string> RelationsTypes => relations ?? Enumerable.Empty<string>();
 
 
-        public ItemResolving ChildrenOfType(params Enum[] types)
+        public ItemResolving ChildrenOfType(params string[] types)
         {
             if (children == null)
-                children = new List<Enum>(types.Length);
+                children = new List<string>(types.Length);
 
             children.AddRange(types);
 
             return this;
         }
 
-        public ItemResolving RelatedItemsOfType(params Enum[] types)
+        public ItemResolving RelatedItemsOfType(params string[] types)
         {
             if (relations == null)
-                relations = new List<Enum>(types.Length);
+                relations = new List<string>(types.Length);
 
             relations.AddRange(types);
 

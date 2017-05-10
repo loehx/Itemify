@@ -2,26 +2,58 @@
 using System.Collections.Generic;
 using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql.Entities;
-using Itemify.Core.Typing;
 
 namespace Itemify.Core.Item
 {
-    class DefaultItem : ItemBase, IItem
+    public class DefaultItem : ItemBase, IItemReference
     {
+        private readonly IItemReference parent;
+        public static DefaultItem Root => new DefaultItem(Guid.Empty, DefaultTypes.Root, null);
+
+        public bool IsRoot => this.Guid == Guid.Empty && Type == DefaultTypes.Root;
+        public bool HasUnknownType => Type == DefaultTypes.Unknown;
+
         public IReadOnlyCollection<IItemReference> Children => children;
         public IReadOnlyCollection<IItemReference> Related => related;
 
-        public DefaultItem(Guid newGuid, TypeItem type, ItemContext context, IItemReference parent) 
-            : base(context, new ItemEntity(), parent, true)
+
+        public DefaultItem(string type)
+            : base(new ItemEntity() { Guid = Guid.NewGuid(), Type = type }, Root, true)
         {
-            Guid = newGuid;
-            Type = type;
+            if (type == null) throw new ArgumentNullException(nameof(type));
+
             children.SetReadOnly(true);
             related.SetReadOnly(true);
         }
 
-        public DefaultItem(ItemEntity entity, ItemContext context)
-            : base(context, entity, new ItemReference(entity.ParentGuid, context.TypeManager.ParseTypeItem(entity.ParentType)), false)
+        public DefaultItem()
+            : base(new ItemEntity() { Guid = Guid.NewGuid(), Type = DefaultTypes.Unknown }, Root, true)
+        {
+            children.SetReadOnly(true);
+            related.SetReadOnly(true);
+        }
+
+        public DefaultItem(Guid newGuid, string type)
+            : base(new ItemEntity() { Guid = newGuid, Type = type }, Root, true)
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+
+            children.SetReadOnly(true);
+            related.SetReadOnly(true);
+        }
+
+        public DefaultItem(Guid newGuid, string type, IItemReference parent) 
+            : base(new ItemEntity() { Guid = newGuid, Type = type }, parent, true)
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (!IsRoot && parent == null) throw new ArgumentNullException(nameof(parent));
+
+            children.SetReadOnly(true);
+            related.SetReadOnly(true);
+        }
+
+        public DefaultItem(ItemEntity entity)
+            : base(entity, new ItemReference(entity.ParentGuid, entity.ParentType), false)
         {
             children.SetReadOnly(true);
             related.SetReadOnly(true);

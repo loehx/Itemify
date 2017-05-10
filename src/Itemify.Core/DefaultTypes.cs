@@ -1,11 +1,13 @@
-using Itemify.Core.Typing;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace Itemify.Core
+namespace Itemify
 {
-    [TypeDefinition("i")]
-    public enum DefaultTypes
+    public class DefaultTypes
     {
-        [TypeValue("root")]
-        Root
+        public static string Root => "root";
+        public static string Unknown => "unknown";
     }
 }

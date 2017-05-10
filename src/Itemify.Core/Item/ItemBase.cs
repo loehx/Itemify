@@ -3,18 +3,17 @@ using System.Collections;
 using Itemify.Core.ItemAccess;
 using Itemify.Core.Keywording;
 using Itemify.Core.PostgreSql.Entities;
-using Itemify.Core.Typing;
 using Itemify.Shared.Utils;
 
 namespace Itemify.Core.Item
 {
-    public class ItemBase
+    public class 
+        
+        ItemBase
     {
-        private readonly ItemContext context;
         private readonly ItemEntity entity;
         private readonly IItemReference parent;
         private readonly bool isNew;
-        private TypeSet subTypes;
 
         protected ItemCollection<IItemReference> related { get; }
         protected ItemCollection<IItemReference> children { get; }
@@ -22,17 +21,17 @@ namespace Itemify.Core.Item
         public int Revision => entity.Revision;
         public bool Debug => entity.Debug;
         public bool HasBody => !string.IsNullOrEmpty(entity.ValueJson);
-        public bool IsParentResolved => Parent is IItem;
+        public bool IsParentResolved => Parent is ItemBase;
         public IItemReference Parent => parent;
-        public TypeSet SubTypes => subTypes ?? (subTypes = context.TypeManager.ParseTypeSet(entity.SubTypes ?? ""));
         public DateTime Created => entity.Created;
         public DateTime Modified => entity.Modified;
 
         public bool IsNew => isNew;
 
-        internal ItemBase(ItemContext context, ItemEntity entity, IItemReference parent, bool isNew)
+        internal ItemBase(ItemEntity entity, IItemReference parent, bool isNew)
         {
-            this.context = context;
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+
             this.entity = entity;
             this.parent = parent;
             this.isNew = isNew;
@@ -46,15 +45,15 @@ namespace Itemify.Core.Item
             set { entity.Guid = value; }
         }
 
-        public TypeItem Type
+        public string Type
         {
-            get { return context.TypeManager.ParseTypeItem(entity.Type); }
-            set { entity.Type = value.ToStringValue(); }
+            get { return entity.Type; }
+            set { entity.Type = value; }
         }
 
         public string Name
         {
-            get { return string.IsNullOrEmpty(entity.Name) ? "[" + Type.Value + "]" : entity.Name; }
+            get { return string.IsNullOrEmpty(entity.Name) ? "[" + Type + "]" : entity.Name; }
             set { entity.Name = value ?? ""; }
         }
 
@@ -124,11 +123,8 @@ namespace Itemify.Core.Item
 
         internal ItemEntity GetEntity()
         {
-            if (subTypes != null)
-                entity.SubTypes = subTypes.ToStringValue();
-
             entity.ParentGuid = parent.Guid;
-            entity.ParentType = parent.Type.ToStringValue();
+            entity.ParentType = parent.Type;
 
             var now = DateTime.Now;
             now = new DateTime(now.Ticks - (now.Ticks % TimeSpan.TicksPerMillisecond)); // cut off ticks
@@ -150,19 +146,19 @@ namespace Itemify.Core.Item
 
         public override string ToString()
         {
-            return $"{Name} <{Type.Name}:{Type.Value}> ({(IsNew ? "NEW" : "REV:" + Revision)})";
+            return $"{Name} <{Type}> ({(IsNew ? "NEW" : "REV:" + Revision)})";
         }
 
         public override bool Equals(object obj)
         {
-            var item = obj as IItem;
+            var item = obj as ItemBase;
             if (item != null)
                 return Equals(item);
 
             return false;
         }
 
-        public bool Equals(IItem item)
+        public bool Equals(ItemBase item)
         {
             return item.Guid == Guid && item.Type.Equals(Type);
         }
@@ -174,7 +170,7 @@ namespace Itemify.Core.Item
 
         public int CompareTo(object obj)
         {
-            var item = obj as IItem;
+            var item = obj as ItemBase;
             if (item != null)
             {
                 if (IsNew && item.IsNew)

@@ -6,7 +6,6 @@ using Itemify.Core.Exceptions;
 using Itemify.Core.Item;
 using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql;
-using Itemify.Core.Typing;
 using Itemify.Logging;
 using Itemify.Shared.Utils;
 using Itemify.Spec.Example_A.Types;
@@ -24,7 +23,6 @@ namespace Itemify.Core.Spec
         private PostgreSqlProvider sqlProvider;
         private EntityProvider entityProvider;
         private ItemProvider provider;
-        private TypeManager typeManager;
         private RegionBasedLogWriter logwriter;
 
 
@@ -41,12 +39,8 @@ namespace Itemify.Core.Spec
             sqlProvider = new PostgreSqlProvider(connectionPool, logwriter.NewRegion(nameof(PostgreSqlProvider)), SCHEMA);
             sqlProvider.EnsureSchemaExists();
 
-            typeManager = new TypeManager();
-            typeManager.Register<DeviceType>();
-            typeManager.Register<SensorType>();
-
             entityProvider = new EntityProvider(sqlProvider, logwriter.NewRegion(nameof(EntityProvider)));
-            provider = new ItemProvider(entityProvider, typeManager, logwriter.NewRegion(nameof(ItemProvider)));
+            provider = new ItemProvider(entityProvider, logwriter.NewRegion(nameof(ItemProvider)));
 
             var tables = sqlProvider.GetTableNamesBySchema(SCHEMA);
             foreach (var table in tables)
@@ -68,20 +62,18 @@ namespace Itemify.Core.Spec
         {
             Assert.IsNotNull(provider.Root);
             Assert.AreEqual(provider.Root.Guid, Guid.Empty);
-            Assert.AreEqual(provider.Root.Type.Name, "i");
-            Assert.AreEqual(provider.Root.Type.Value, "root");
-            Assert.AreEqual(provider.Root.Type.EnumValue, 0);
+            Assert.AreEqual(provider.Root.Type, "i");
         }
 
 
         [Test]
         public void NewItem_A()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
+            var item = new DefaultItem();
 
             Assert.IsNotNull(item);
             Assert.AreNotEqual(Guid.Empty, item.Guid);
-            Assert.AreEqual(item.Type, typeManager.GetTypeItem(DeviceType.Sensor));
+            Assert.AreEqual(item.Type, DefaultTypes.Unknown);
             Assert.AreEqual(item.Children.Count, 0);
             Assert.AreEqual(item.Related.Count, 0);
             Assert.AreEqual(item.Created, DateTime.MinValue);
@@ -129,7 +121,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void NewItem_B()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
 
             item.Name = "Example item";
             item.Order = int.MinValue;
@@ -138,7 +130,7 @@ namespace Itemify.Core.Spec
             item.ValueString = new string('E', 1024 * 1024);
 
             Assert.AreNotEqual(Guid.Empty, item.Guid);
-            Assert.AreEqual(item.Type, typeManager.GetTypeItem(DeviceType.Meter));
+            Assert.AreEqual(item.Type, DefaultTypes.Unknown);
             Assert.AreEqual(item.Children.Count, 0);
             Assert.AreEqual(item.Related.Count, 0);
             Assert.AreEqual(item.Created, DateTime.MinValue);
@@ -153,24 +145,21 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(item.ValueString, new string('E', 1024 * 1024));
             Assert.AreEqual(item.ValueNumber, double.MinValue * 1.1);
             Assert.AreEqual(item.ValueDate, DateTime.MinValue.AddMilliseconds(1));
-            Assert.IsTrue(item.SubTypes.IsEmpty);
         }
 
         [Test]
         public void NewItem_C()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
+            var item = new DefaultItem();
 
             item.Name = "";
             item.Order = int.MaxValue;
             item.ValueDate = DateTime.MaxValue;
             item.ValueNumber = double.MaxValue;
             item.ValueString = "";
-            item.SubTypes.Set(SensorType.Brightness);
-            item.SubTypes.Set(SensorType.SetTemperature);
 
             Assert.AreNotEqual(Guid.Empty, item.Guid);
-            Assert.AreEqual(item.Type, typeManager.GetTypeItem(DeviceType.Sensor));
+            Assert.AreEqual(item.Type, DefaultTypes.Unknown);
             Assert.AreEqual(item.Children.Count, 0);
             Assert.AreEqual(item.Related.Count, 0);
             Assert.AreEqual(item.Created, DateTime.MinValue);
@@ -184,16 +173,12 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(item.ValueString, null);
             Assert.AreEqual(item.ValueNumber, double.MaxValue);
             Assert.AreEqual(item.ValueDate, DateTime.MaxValue);
-            Assert.IsFalse(item.SubTypes.IsEmpty);
-            Assert.IsTrue(item.SubTypes.Contains(SensorType.Brightness));
-            Assert.IsTrue(item.SubTypes.Contains(SensorType.SetTemperature));
-            Assert.IsFalse(item.SubTypes.Contains(SensorType.Temperature));
         }
 
         [Test]
         public void NewItem_BodyA()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
 
             var body = new ExampleBodyA()
             {
@@ -234,7 +219,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void NewItem_BadNumberValue()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
 
             Assert.Throws<ArgumentOutOfRangeException>(() => item.ValueNumber = double.MinValue); // reserved by Itemify
         }
@@ -242,7 +227,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void NewItem_BadDateValue()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
 
             Assert.Throws<ArgumentOutOfRangeException>(() => item.ValueDate = DateTime.MinValue); // reserved by Itemify
         }
@@ -272,7 +257,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveItem()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
 
             item.Name = "Example";
             item.Order = -1;
@@ -288,7 +273,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetItem()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
 
             item.Name = "Example";
             item.Order = -1;
@@ -302,7 +287,7 @@ namespace Itemify.Core.Spec
 
             Assert.AreNotEqual(Guid.Empty, actual.Guid);
             Assert.AreEqual(id, actual.Guid);
-            Assert.AreEqual(actual.Type, typeManager.GetTypeItem(DeviceType.Meter));
+            //Assert.AreEqual(actual.Type, typeManager.GetTypeItem(DeviceType.Meter));
             Assert.AreEqual(actual.Children.Count, 0);
             Assert.AreEqual(actual.Related.Count, 0);
             Assert.AreEqual(actual.Created, item.Created);
@@ -316,7 +301,6 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(actual.ValueString, "string");
             Assert.AreEqual(actual.ValueNumber, 1.1);
             Assert.AreEqual(actual.ValueDate, DateTime.MinValue.AddMilliseconds(1));
-            Assert.IsTrue(actual.SubTypes.IsEmpty);
         }
 
 
@@ -324,15 +308,13 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetItem_SetValuesToNull()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem(DeviceType.Meter);
 
             item.Name = "Example";
             item.Order = -1;
             item.ValueDate = DateTime.MinValue.AddMilliseconds(1);
             item.ValueNumber = 1.1;
             item.ValueString = "string";
-            item.SubTypes.Set(SensorType.Brightness, SensorType.SetTemperature);
-
 
             var id = provider.Save(item);
             var saved = provider.GetItemByReference(item);
@@ -358,7 +340,6 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(0, final.Related.Count);
             Assert.AreEqual(item.Created, final.Created);
             Assert.AreNotEqual(item.Modified, final.Modified);
-            Assert.AreEqual(item.SubTypes, final.SubTypes);
             Assert.AreEqual(item.Type, final.Type);
             Assert.AreEqual(null, final.GetBody<string>());
         }
@@ -368,7 +349,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetItem_MinimumInformation()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
             var id = provider.Save(item);
             var saved = provider.GetItemByReference(item);
            
@@ -383,7 +364,6 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(0, saved.Related.Count);
             Assert.AreEqual(item.Created, saved.Created);
             Assert.AreEqual(item.Modified, saved.Modified);
-            Assert.IsTrue(saved.SubTypes.IsEmpty);
             Assert.AreEqual(item.Type, saved.Type);
             Assert.AreEqual(null, saved.TryGetBody<string>());
             Assert.AreEqual(0, saved.TryGetBody<int>());
@@ -393,7 +373,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveExisting_NotExisting()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
 
             Assert.Throws<ItemNotFoundException>(() => provider.SaveExisting(item));
         }
@@ -401,7 +381,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveNew()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
 
             item.Name = "Example";
             item.Order = -1;
@@ -417,7 +397,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveNewAndGet()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Meter));
+            var item = new DefaultItem();
 
             item.Order = Int32.MaxValue;
             item.ValueDate = new DateTime(2100, 1, 1);
@@ -430,7 +410,7 @@ namespace Itemify.Core.Spec
 
             Assert.AreNotEqual(Guid.Empty, actual.Guid);
             Assert.AreEqual(id, actual.Guid);
-            Assert.AreEqual(actual.Type, typeManager.GetTypeItem(DeviceType.Meter));
+            //Assert.AreEqual(actual.Type, typeManager.GetTypeItem(DeviceType.Meter));
             Assert.AreEqual(actual.Children.Count, 0);
             Assert.AreEqual(actual.Related.Count, 0);
             Assert.AreEqual(actual.Created, item.Created);
@@ -444,7 +424,6 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(actual.ValueString, item.ValueString);
             Assert.AreEqual(actual.ValueNumber, Math.PI);
             Assert.AreEqual(actual.ValueDate, item.ValueDate);
-            Assert.IsTrue(actual.SubTypes.IsEmpty);
         }
 
 
@@ -602,13 +581,13 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetNewItem_WithNewChild()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
-            var child = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+            var item = new DefaultItem(DeviceType.Sensor);
+            var child = new DefaultItem(SensorType.Temperature);
 
             provider.SaveNew(item);
             provider.SaveNew(child);
 
-            var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
+            var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType("temp"));
 
             Assert.AreEqual(1, actual.Children.Count);
             Assert.AreEqual(item.Children.First().Guid, actual.Children.First().Guid);
@@ -623,8 +602,8 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetNewItem_WithExistingChild()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
-            var child = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+            var item = new DefaultItem(DeviceType.Sensor);
+            var child = new DefaultItem(SensorType.Temperature);
 
             provider.SaveNew(child);
 
@@ -638,11 +617,11 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetNewItem_WithNewChildren()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
+            var item = new DefaultItem(DeviceType.Sensor);
 
-            var childA = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
-            var childB = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
-            var childC = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+            var childA = new DefaultItem(SensorType.Temperature);
+            var childB = new DefaultItem(SensorType.Temperature);
+            var childC = new DefaultItem(SensorType.Temperature);
 
             provider.SaveNew(item);
             new[] {childA, childB, childC}.ForEach(k => provider.SaveNew(k));
@@ -664,12 +643,12 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetNewItem_WithNewChildren_Implicit()
         {
-            var item = provider.NewItem(provider.Root, typeManager.GetTypeItem(DeviceType.Sensor));
+            var item = new DefaultItem(DeviceType.Sensor);
             provider.SaveNew(item);
 
-            var childA = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
-            var childB = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
-            var childC = provider.NewItem(item, typeManager.GetTypeItem(SensorType.Temperature));
+            var childA = new DefaultItem(SensorType.Temperature);
+            var childB = new DefaultItem(SensorType.Temperature);
+            var childC = new DefaultItem(SensorType.Temperature);
 
             new[] { childA, childB, childC }.ForEach(k => provider.SaveNew(k));
 

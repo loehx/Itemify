@@ -5,7 +5,7 @@ namespace Itemify.Core.Spec.Example_A
 {
     internal class Device
     {
-        private readonly IItem item;
+        private readonly global::Itemify.Item item;
 
         public Guid Guid => item.Guid;
 
@@ -15,7 +15,7 @@ namespace Itemify.Core.Spec.Example_A
             set { item.Name = value; }
         }
 
-        public Device(IItem item)
+        public Device(global::Itemify.Item item)
         {
             this.item = item;
         }

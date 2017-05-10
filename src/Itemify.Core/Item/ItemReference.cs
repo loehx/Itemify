@@ -1,15 +1,14 @@
 ﻿using System;
 using Itemify.Core.Item;
-using Itemify.Core.Typing;
 
 namespace Itemify.Core.ItemAccess
 {
     public class ItemReference : IItemReference
     {
         public Guid Guid { get; }
-        public TypeItem Type { get; }
+        public string Type { get; }
 
-        public ItemReference(Guid guid, TypeItem type)
+        public ItemReference(Guid guid, string type)
         {
             this.Guid = guid;
             this.Type = type;
@@ -35,16 +34,14 @@ namespace Itemify.Core.ItemAccess
 
         public int CompareTo(object obj)
         {
-            var item = obj as IItem;
+            var item = obj as DefaultItem;
             if (item != null)
                 return -1;
 
             var reference = obj as IItemReference;
             if (reference != null)
             {
-                var r = string.Compare(reference.Type.Name, Type.Name, StringComparison.Ordinal);
-                if (r == 0)
-                    return string.Compare(reference.Type.Value, Type.Value, StringComparison.Ordinal);
+                return string.Compare(reference.Type, Type, StringComparison.Ordinal);
             }
 
             return 0;

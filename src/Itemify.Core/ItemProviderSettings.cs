@@ -1,15 +1,11 @@
 using System;
-using Itemify.Core.Typing;
 
 namespace Itemify.Core
 {
     public class ItemProviderSettings
     {
-        private readonly TypeManager typeManager;
-
-        public ItemProviderSettings(TypeManager typeManager)
+        public ItemProviderSettings()
         {
-            this.typeManager = typeManager;
         }
 
         public string PostgreSqlConnectionString { get; set; }

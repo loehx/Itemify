@@ -1,17 +1,11 @@
-﻿using Itemify.Core.Typing;
+﻿
 
 namespace Itemify.Spec.Example_A.Types
 {
-    [TypeDefinition("SensorType")]
-    internal enum SensorType
+    internal class SensorType
     {
-        [TypeValue("temp")]
-        Temperature,
-
-        [TypeValue("settemp")]
-        SetTemperature,
-
-        [TypeValue("bright")]
-        Brightness
+        public static string Temperature => "Temperature";
+        public static string SetTemperature => "SetTemperature";
+        public static string Brightness => "Brightness";
     }
 }

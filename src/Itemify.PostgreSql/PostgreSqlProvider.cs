@@ -81,14 +81,22 @@ namespace Itemify.Core.PostgreSql
             return db.Execute(sql.ToString()) > 0;
         }
 
-        public bool TableExists(string tableName)
+        public bool TableExists(string resolvedTableName)
         {
+            if (resolvedTableName == null) throw new ArgumentNullException(nameof(resolvedTableName));
             var sql = new StringBuilder();
+
+            var split = resolvedTableName.Split('.');
+            if (split.Length != 2)
+                throw new ArgumentException("A resolved table name must contain the schema and a dot.", nameof(resolvedTableName));
+
+            var schema = split[0].Trim('"');
+            var table = split[1].Trim('"');
 
             sql.AppendLine(@"SELECT EXISTS (SELECT 1");
             sql.AppendLine("    FROM   information_schema.tables");
-            sql.AppendFormat("    WHERE  table_schema = '{0}'", Schema).AppendLine();
-            sql.AppendFormat("    AND    table_name = '{0}'", tableName).AppendLine();
+            sql.AppendFormat("    WHERE  table_schema = '{0}'", schema).AppendLine();
+            sql.AppendFormat("    AND    table_name = '{0}'", table).AppendLine();
             sql.AppendLine(");");
 
             var result = db.QuerySingleValue(sql.ToString());

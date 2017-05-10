@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using Itemify.Core;
 using Itemify.Core.Item;
 using Itemify.Core.ItemAccess;
-using Itemify.Core.Typing;
 using Itemify.Logging;
 
 namespace Itemify
@@ -13,46 +13,32 @@ namespace Itemify
     {
         private readonly ItemProvider provider;
         private readonly ItemifySettings settings;
-        private readonly TypeManager typeManager;
 
 
         public Itemify(ItemifySettings settings, ILogWriter log)
         {
             this.settings = settings;
-            this.typeManager = settings.GetTypeManager();
-            this.provider = new ItemProvider(settings.GetProviderSettings(), this.typeManager, log);
+            this.provider = new ItemProvider(settings.GetProviderSettings(), log);
         }
 
-        public IItem NewItem(Enum type)
+
+        public Guid Save(Item item)
         {
-            return NewItem(provider.Root, type);
+            return provider.Save(item.GetInner());
         }
 
-        public IItem NewItem(IItemReference parent, Enum type)
+        public void SaveExisting(Item item)
         {
-            var typeItem = typeManager.GetTypeItem(type);
-            return provider.NewItem(parent, typeItem);
+            provider.SaveExisting(item.GetInner());
         }
 
-
-
-        public Guid Save(IItem item)
-        {
-            return provider.Save(item);
-        }
-
-        public void SaveExisting(IItem item)
-        {
-            provider.SaveExisting(item);
-        }
-
-        public Guid SaveNew(IItem item)
+        public Guid SaveNew(Item item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
-                return provider.SaveNew(item);
+                return provider.SaveNew(item.GetInner());
             }
             catch (Exception err)
             {
@@ -60,29 +46,29 @@ namespace Itemify
             }
         }
 
-        public IItem GetItemByReference(Guid guid, Enum type)
+        public Item GetItemByReference(Guid guid, string type)
         {
-            return provider.GetItemByReference(new ItemReference(guid, typeManager.GetTypeItem(type)));
+            return Item.Wrap(provider.GetItemByReference(new ItemReference(guid, type)));
         }
 
-        public IItem GetItemByReference(Guid guid, Enum type, ItemResolving resolving)
+        public Item GetItemByReference(Guid guid, string type, ItemResolving resolving)
         {
-            return provider.GetItemByReference(new ItemReference(guid, typeManager.GetTypeItem(type)));
+            return Item.Wrap(provider.GetItemByReference(new ItemReference(guid, type), resolving));
         }
 
-        public IItem GetItemByReference(IItemReference r)
+        public Item GetItemByReference(IItemReference r)
         {
-            return provider.GetItemByReference(r);
+            return Item.Wrap(provider.GetItemByReference(r));
         }
 
-        public IItem GetItemByReference(IItemReference r, ItemResolving resolving)
+        public Item GetItemByReference(IItemReference r, ItemResolving resolving)
         {
-            return provider.GetItemByReference(r, resolving);
+            return Item.Wrap(provider.GetItemByReference(r, resolving));
         }
 
-        public IEnumerable<IItem> GetChildrenOfItemByReference(IItemReference r, params Enum[] types)
+        public IEnumerable<Item> GetChildrenOfItemByReference(IItemReference r, params string[] types)
         {
-            return provider.GetChildrenOfItemByReference(r, types);
+            return provider.GetChildrenOfItemByReference(r, types).Select(Item.Wrap);
         }
     }
 }
