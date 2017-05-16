@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Itemify.Core.Item;
+using Itemify.Shared.Utils;
 
 namespace Itemify
 {
@@ -142,14 +143,14 @@ namespace Itemify
             return inner.CompareTo(obj);
         }
 
-        public IReadOnlyCollection<IItemReference> Children
+        public IReadOnlyCollection<Item> Children
         {
-            get { return inner.Children; }
+            get { return inner.Children.Cast<DefaultItem>().SelectList(Wrap); }
         }
 
-        public IReadOnlyCollection<IItemReference> Related
+        public IReadOnlyCollection<Item> Related
         {
-            get { return inner.Related; }
+            get { return inner.Related.Cast<DefaultItem>().SelectList(Wrap); }
         }
 
         internal DefaultItem GetInner() => this.inner;
