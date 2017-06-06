@@ -54,6 +54,7 @@ namespace Itemify
         public IItemReference Parent
         {
             get { return inner.Parent; }
+            set { inner.Parent = value; }
         }
 
         public DateTime Created

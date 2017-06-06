@@ -12,7 +12,7 @@ namespace Itemify.Core.Item
         ItemBase
     {
         private readonly ItemEntity entity;
-        private readonly IItemReference parent;
+        private IItemReference parent;
         private readonly bool isNew;
 
         protected ItemCollection<IItemReference> related { get; }
@@ -22,7 +22,9 @@ namespace Itemify.Core.Item
         public bool Debug => entity.Debug;
         public bool HasBody => !string.IsNullOrEmpty(entity.ValueJson);
         public bool IsParentResolved => Parent is ItemBase;
-        public IItemReference Parent => parent;
+        public IItemReference Parent {
+            get { return parent; }
+            set { parent = value; } }
         public DateTime Created => entity.Created;
         public DateTime Modified => entity.Modified;
 

@@ -9,7 +9,7 @@ using Itemify.Logging;
 
 namespace Itemify
 {
-    public class Itemify
+    public class Itemify : IItemify
     {
         private readonly ItemProvider provider;
         private readonly ItemifySettings settings;
