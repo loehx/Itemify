@@ -19,7 +19,7 @@ namespace Itemify
 
         public Item(string type)
         {
-            inner = new DefaultItem(Guid.NewGuid(), type);
+            inner = new DefaultItem(type);
         }
 
         internal Item(DefaultItem inner)

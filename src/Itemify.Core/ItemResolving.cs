@@ -14,6 +14,7 @@ namespace Itemify.Core
         }
 
         public bool Empty => children == null && relations == null;
+        public bool ResolveParent { get; set; } = false;
         public IEnumerable<string> ChildrenTypes => children ?? Enumerable.Empty<string>();
         public IEnumerable<string> RelationsTypes => relations ?? Enumerable.Empty<string>();
 
@@ -38,6 +39,12 @@ namespace Itemify.Core
             return this;
         }
 
+        public ItemResolving ResolveParentItem(bool resolve = true)
+        {
+            ResolveParent = resolve;
+
+            return this;
+        }
 
         public static ItemResolving Default => new ItemResolving();
     }

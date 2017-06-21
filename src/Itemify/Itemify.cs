@@ -32,6 +32,11 @@ namespace Itemify
             provider.SaveExisting(item.GetInner());
         }
 
+        public void AddRelation(IItemReference source, IItemReference target)
+        {
+            throw new NotImplementedException();
+        }
+
         public Guid SaveNew(Item item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
@@ -64,6 +69,16 @@ namespace Itemify
         public Item GetItemByReference(IItemReference r, ItemResolving resolving)
         {
             return Item.Wrap(provider.GetItemByReference(r, resolving));
+        }
+
+        public IEnumerable<Item> GetItemsByStringValue(string value, string type)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<Item> GetItemsByStringValue(string value, string type, ItemResolving resolving)
+        {
+            throw new NotImplementedException();
         }
 
         public IEnumerable<Item> GetChildrenOfItemByReference(IItemReference r, params string[] types)

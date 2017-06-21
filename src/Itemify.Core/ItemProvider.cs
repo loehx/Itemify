@@ -153,6 +153,11 @@ namespace Itemify.Core
                 item.AddChildren(children);
             }
 
+            if (resolving.ResolveParent)
+            {
+                item.Parent = GetItemByReference(item.Parent);
+            }
+
             return item;
         }
 

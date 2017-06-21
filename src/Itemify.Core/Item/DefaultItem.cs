@@ -18,7 +18,7 @@ namespace Itemify.Core.Item
 
 
         public DefaultItem(string type)
-            : base(new ItemEntity() { Guid = Guid.NewGuid(), Type = type }, Root, true)
+            : base(new ItemEntity() { Guid = Guid.Empty, Type = type }, Root, true)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
 
@@ -27,7 +27,7 @@ namespace Itemify.Core.Item
         }
 
         public DefaultItem()
-            : base(new ItemEntity() { Guid = Guid.NewGuid(), Type = DefaultTypes.Unknown }, Root, true)
+            : base(new ItemEntity() { Guid = Guid.Empty, Type = DefaultTypes.Unknown }, Root, true)
         {
             children.SetReadOnly(true);
             related.SetReadOnly(true);
