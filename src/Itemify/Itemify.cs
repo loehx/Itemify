@@ -81,6 +81,12 @@ namespace Itemify
             return Item.Wrap(provider.GetItemByReference(r, resolving));
         }
 
+        /// <summary>
+        /// Returns all items, which string value matchs a specific pattern. (case-insensitive)
+        /// </summary>
+        /// <param name="pattern">Wildcard: %</param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public IEnumerable<Item> GetItemsByStringValue(string pattern, string type)
         {
             return GetItemsByStringValue(pattern, type, ItemResolving.Default);

@@ -17,6 +17,13 @@ namespace Itemify
         void SetRelations(IItemReference source, params IItemReference[] targets);
         void AddRelations(IItemReference source, params IItemReference[] targets);
         void RemoveRelations(IItemReference source, params string[] types);
+
+        /// <summary>
+        /// Returns all items, which string value matchs a specific pattern. (case-insensitive)
+        /// </summary>
+        /// <param name="pattern">Wildcard: %</param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         IEnumerable<Item> GetItemsByStringValue(string pattern, string type);
 
         /// <summary>
