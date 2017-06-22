@@ -169,6 +169,38 @@ namespace Itemify.Core
             provider.DeleteItemRelations(itemA.Type, itemA.Guid, RELATIONS_MAPPING_TABLE_NAME, types);
         }
 
+        public IEnumerable<DefaultItem> GetItemsByStringValue(string pattern, string type, ItemResolving resolving)
+        {
+            if (pattern == null) throw new ArgumentNullException(nameof(pattern));
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (resolving == null) throw new ArgumentNullException(nameof(resolving));
+
+            var items = provider.QueryItemsByStringValue(type, pattern);
+
+            return resolveItems(items, resolving);
+        }
+
+        public IEnumerable<DefaultItem> GetItemsByNumberValue(double from, double to, string type, ItemResolving resolving)
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (resolving == null) throw new ArgumentNullException(nameof(resolving));
+
+            var items = provider.QueryItemsByNumberValue(type, from, to);
+
+            return resolveItems(items, resolving);
+        }
+
+        public IEnumerable<DefaultItem> GetItemsByDateTimeValue(DateTime from, DateTime to, string type, ItemResolving resolving)
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (resolving == null) throw new ArgumentNullException(nameof(resolving));
+
+            var items = provider.QueryItemsByDateTimeValue(type, from, to);
+
+            return resolveItems(items, resolving);
+        }
+
+
         private void saveChildren(DefaultItem item)
         {
             var relations = item.Children
@@ -205,6 +237,12 @@ namespace Itemify.Core
             }
 
             return item;
+        }
+
+        private IEnumerable<DefaultItem> resolveItems(IEnumerable<ItemEntity> entities, ItemResolving resolving)
+        {
+            // TODO: Work on performance
+            return entities.Select(k => resolveItem(k, resolving));
         }
 
         private IEnumerable<DefaultItem> getChildrenOfItem(IItemReference itemRef, IEnumerable<string> types)

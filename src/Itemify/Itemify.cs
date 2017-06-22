@@ -81,14 +81,70 @@ namespace Itemify
             return Item.Wrap(provider.GetItemByReference(r, resolving));
         }
 
-        public IEnumerable<Item> GetItemsByStringValue(string value, string type)
+        public IEnumerable<Item> GetItemsByStringValue(string pattern, string type)
         {
-            throw new NotImplementedException();
+            return GetItemsByStringValue(pattern, type, ItemResolving.Default);
         }
 
-        public IEnumerable<Item> GetItemsByStringValue(string value, string type, ItemResolving resolving)
+        /// <summary>
+        /// Returns all items, which string value matchs a specific pattern. (case-insensitive)
+        /// </summary>
+        /// <param name="pattern">Wildcard: %</param>
+        /// <param name="type"></param>
+        /// <param name="resolving"></param>
+        /// <returns></returns>
+        public IEnumerable<Item> GetItemsByStringValue(string pattern, string type, ItemResolving resolving)
         {
-            throw new NotImplementedException();
+            return provider.GetItemsByStringValue(pattern, type, resolving).Select(Item.Wrap);
+        }
+
+        /// <summary>
+        /// Returns all items, which number value is within a specific range. (FROM &lt;= VALUE &lt;= TO)
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public IEnumerable<Item> GetItemsByNumberValue(double from, double to, string type)
+        {
+            return GetItemsByNumberValue(from, to, type, ItemResolving.Default);
+        }
+
+        /// <summary>
+        /// Returns all items, which number value is within a specific range. (FROM &lt;= VALUE &lt;= TO)
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="type"></param>
+        /// <param name="resolving"></param>
+        /// <returns></returns>
+        public IEnumerable<Item> GetItemsByNumberValue(double from, double to, string type, ItemResolving resolving)
+        {
+            return provider.GetItemsByNumberValue(from, to, type, resolving).Select(Item.Wrap);
+        }
+
+        /// <summary>
+        /// Returns all items, which date value is within a specific range. (FROM &lt;= VALUE &lt;= TO)
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public IEnumerable<Item> GetItemsByDateTimeValue(DateTime from, DateTime to, string type)
+        {
+            return GetItemsByDateTimeValue(from, to, type, ItemResolving.Default);
+        }
+
+        /// <summary>
+        /// Returns all items, which date value is within a specific range. (FROM &lt;= VALUE &lt;= TO)
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public IEnumerable<Item> GetItemsByDateTimeValue(DateTime from, DateTime to, string type, ItemResolving resolving)
+        {
+            return provider.GetItemsByDateTimeValue(from, to, type, resolving).Select(Item.Wrap);
         }
 
         public IEnumerable<Item> GetChildrenOfItemByReference(IItemReference r, params string[] types)

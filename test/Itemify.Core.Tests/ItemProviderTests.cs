@@ -429,6 +429,111 @@ namespace Itemify.Core.Spec
 
 
         #endregion
+        
+        #region -----[   Query item   ]------------------------------------------------------------------------------------------------------------------------------
+
+        [Test]
+        public void GetItemsByStringValue()
+        {
+            var item = new DefaultItem(Guid.NewGuid());
+
+            item.Type = DeviceType.Actor;
+            item.Name = "Example";
+            item.ValueString = "test string";
+
+            var id = provider.Save(item);
+            Assert.AreEqual(id, item.Guid);
+
+            var actual = provider.GetItemsByStringValue("test string", item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByStringValue("test%", item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByStringValue("%st strin%", item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByStringValue("TEST st%", item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByStringValue("TEST%ng", item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByStringValue("test_string", item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(0, actual.Length);
+
+            actual = provider.GetItemsByStringValue("TEST_str___", item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(0, actual.Length);
+
+            actual = provider.GetItemsByStringValue("test1%", item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(0, actual.Length);
+
+            actual = provider.GetItemsByStringValue("test", item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(0, actual.Length);
+        }
+
+        [Test]
+        public void GetItemsByNumberValue()
+        {
+            var item = new DefaultItem(Guid.NewGuid());
+
+            item.Type = DeviceType.Actor;
+            item.Name = "Example";
+            item.ValueNumber = 5;
+
+            var id = provider.Save(item);
+            Assert.AreEqual(id, item.Guid);
+
+            var actual = provider.GetItemsByNumberValue(1, 10, item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByNumberValue(1, 5, item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByNumberValue(5, 10, item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByNumberValue(6, 10, item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(0, actual.Length);
+        }
+
+        [Test]
+        public void GetItemsByDateTimeValue()
+        {
+            var item = new DefaultItem(Guid.NewGuid());
+
+            item.Type = DeviceType.Actor;
+            item.Name = "Example";
+            item.ValueDate = new DateTime(2017, 1, 5);
+
+            var id = provider.Save(item);
+            Assert.AreEqual(id, item.Guid);
+
+            var actual = provider.GetItemsByDateTimeValue(new DateTime(2017, 1, 1), new DateTime(2017, 1, 10), item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByDateTimeValue(new DateTime(2017, 1, 5), new DateTime(2017, 1, 10), item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByDateTimeValue(new DateTime(2017, 1, 1), new DateTime(2017, 1, 5), item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(id, actual[0].Guid);
+
+            actual = provider.GetItemsByDateTimeValue(new DateTime(2017, 1, 6), new DateTime(2017, 1, 10), item.Type, ItemResolving.Default).ToArray();
+            Assert.AreEqual(0, actual.Length);
+        }
+
+        #endregion
 
         #region -----[   Relations   ]------------------------------------------------------------------------------------------------------------------------------
 

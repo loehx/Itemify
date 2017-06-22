@@ -70,7 +70,7 @@ namespace Itemify.Core.PostgreSql
         {
             tableName = resolveTable<ItemEntity>(tableName);
             mappingTableName = resolveTable<ItemRelationEntity>(mappingTableName);
-            var parameters = new object[] {guid, tableName}
+            var parameters = new object[] { guid, tableName }
                 .Concat(targetTables.Select(k => resolveTable<ItemEntity>(k)))
                 .ToArray();
 
@@ -126,6 +126,25 @@ namespace Itemify.Core.PostgreSql
             }
 
             return tableName;
+        }
+
+        public IEnumerable<ItemEntity> QueryItemsByStringValue(string tableName, string pattern)
+        {
+            tableName = postgreSql.ResolveTableName(tableName);
+            pattern = pattern.Replace("_", "\\_"); // Disable PostgreSQL's: Single character wildcard (_)
+            return postgreSql.Query<ItemEntity>($"SELECT * FROM {tableName} WHERE \"ValueString\" ILIKE @0", pattern);
+        }
+
+        public IEnumerable<ItemEntity> QueryItemsByNumberValue(string tableName, double from, double to)
+        {
+            tableName = postgreSql.ResolveTableName(tableName);
+            return postgreSql.Query<ItemEntity>($"SELECT * FROM {tableName} WHERE \"ValueNumber\" >= @0 AND \"ValueNumber\" <= @1", from, to);
+        }
+
+        public IEnumerable<ItemEntity> QueryItemsByDateTimeValue(string tableName, DateTime from, DateTime to)
+        {
+            tableName = postgreSql.ResolveTableName(tableName);
+            return postgreSql.Query<ItemEntity>($"SELECT * FROM {tableName} WHERE \"ValueDate\" >= @0 AND \"ValueDate\" <= @1", from, to);
         }
     }
 }
