@@ -32,7 +32,14 @@ namespace Itemify.Core.PostgreSql.Spec
             var tables = provider.GetTableNamesBySchema(SCHEMA);
             foreach (var table in tables)
             {
-                provider.DropTable(table);
+                try
+                {
+                    provider.DropTable(table);
+                }
+                catch (Exception err)
+                {
+                    Debug.WriteLine("Error deleting table: " + table);
+                }
             }
         }
 
@@ -54,7 +61,6 @@ namespace Itemify.Core.PostgreSql.Spec
         public void CreateTable()
         {
             var tableName = "table_a";
-
             provider.CreateTable<EntityA>(tableName);
 
             var exists = provider.TableExists(tableName);
@@ -92,6 +98,7 @@ namespace Itemify.Core.PostgreSql.Spec
             var tableName = "table_d";
             var entity = new EntityB()
             {
+                Guid = Guid.NewGuid(),
                 Data = new byte[] { 0x0, 0x1, 0x2 },
                 DateTime = DateTime.MinValue,
                 DateTimeOffset = DateTimeOffset.MinValue,
@@ -131,6 +138,7 @@ namespace Itemify.Core.PostgreSql.Spec
             var tableName = "table_d";
             var expected = new EntityB()
             {
+                Guid = Guid.NewGuid(),
                 Data = new byte[] { 0x0, 0x1, 0x2 },
                 DateTime = DateTime.MinValue,
                 DateTimeOffset = new DateTimeOffset(DateTime.Today).ToOffset(TimeSpan.FromHours(6)),
@@ -172,6 +180,7 @@ namespace Itemify.Core.PostgreSql.Spec
             var tableName = "table_d";
             var expected = new EntityB()
             {
+                Guid = Guid.NewGuid(),
                 Data = new byte[] { 0x0, 0x1, 0x2 },
                 DateTime = DateTime.MinValue,
                 DateTimeOffset = DateTimeOffset.MinValue,
@@ -198,6 +207,7 @@ namespace Itemify.Core.PostgreSql.Spec
             var tableName = "table_d";
             var expected = new EntityB()
             {
+                Guid = Guid.NewGuid(),
                 Data = new byte[] { 0x0, 0x1, 0x2 },
                 DateTime = DateTime.MinValue,
                 DateTimeOffset = DateTimeOffset.MinValue,

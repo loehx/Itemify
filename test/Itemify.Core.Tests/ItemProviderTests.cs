@@ -45,7 +45,7 @@ namespace Itemify.Core.Spec
             var tables = sqlProvider.GetTableNamesBySchema(SCHEMA);
             foreach (var table in tables)
             {
-                sqlProvider.DropTable(table);
+                sqlProvider.TryDropTable(table);
             }
         }
 
@@ -62,7 +62,7 @@ namespace Itemify.Core.Spec
         {
             Assert.IsNotNull(provider.Root);
             Assert.AreEqual(provider.Root.Guid, Guid.Empty);
-            Assert.AreEqual(provider.Root.Type, "i");
+            Assert.AreEqual(provider.Root.Type, "root");
         }
 
 
@@ -72,15 +72,15 @@ namespace Itemify.Core.Spec
             var item = new DefaultItem();
 
             Assert.IsNotNull(item);
-            Assert.AreNotEqual(Guid.Empty, item.Guid);
+            Assert.AreEqual(Guid.Empty, item.Guid);
             Assert.AreEqual(item.Type, DefaultTypes.Unknown);
             Assert.AreEqual(item.Children.Count, 0);
             Assert.AreEqual(item.Related.Count, 0);
             Assert.AreEqual(item.Created, DateTime.MinValue);
             Assert.AreEqual(item.Modified, DateTime.MinValue);
-            Assert.IsFalse(item.IsParentResolved);
+            Assert.IsTrue(item.IsParentResolved);
             Assert.AreEqual(item.Debug, false);
-            Assert.AreEqual(item.Name, "DeviceType");
+            Assert.AreEqual(item.Name, "[unknown]");
             Assert.AreEqual(item.Order, 0);
             Assert.AreEqual(item.Parent, provider.Root);
             Assert.AreEqual(item.Revision, 0);
@@ -114,7 +114,7 @@ namespace Itemify.Core.Spec
         }
 
 
-#endregion
+        #endregion
 
         #region -----[   Item instance   ]------------------------------------------------------------------------------------------------------------------------------
 
@@ -123,6 +123,7 @@ namespace Itemify.Core.Spec
         {
             var item = new DefaultItem();
 
+            item.Guid = Guid.NewGuid();
             item.Name = "Example item";
             item.Order = int.MinValue;
             item.ValueDate = DateTime.MinValue.AddMilliseconds(1);
@@ -135,7 +136,7 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(item.Related.Count, 0);
             Assert.AreEqual(item.Created, DateTime.MinValue);
             Assert.AreEqual(item.Modified, DateTime.MinValue);
-            Assert.IsFalse(item.IsParentResolved);
+            Assert.IsTrue(item.IsParentResolved);
             Assert.AreEqual(item.Debug, false);
             Assert.AreEqual(item.Name, "Example item");
             Assert.AreEqual(item.Order, int.MinValue);
@@ -158,15 +159,15 @@ namespace Itemify.Core.Spec
             item.ValueNumber = double.MaxValue;
             item.ValueString = "";
 
-            Assert.AreNotEqual(Guid.Empty, item.Guid);
+            Assert.AreEqual(Guid.Empty, item.Guid);
             Assert.AreEqual(item.Type, DefaultTypes.Unknown);
             Assert.AreEqual(item.Children.Count, 0);
             Assert.AreEqual(item.Related.Count, 0);
             Assert.AreEqual(item.Created, DateTime.MinValue);
             Assert.AreEqual(item.Modified, DateTime.MinValue);
-            Assert.IsFalse(item.IsParentResolved);
+            Assert.IsTrue(item.IsParentResolved);
             Assert.AreEqual(item.Debug, false);
-            Assert.AreEqual(item.Name, "DeviceType");
+            Assert.AreEqual(item.Name, "[unknown]");
             Assert.AreEqual(item.Order, int.MaxValue);
             Assert.AreEqual(item.Parent, provider.Root);
             Assert.AreEqual(item.Revision, 0);
@@ -232,23 +233,23 @@ namespace Itemify.Core.Spec
             Assert.Throws<ArgumentOutOfRangeException>(() => item.ValueDate = DateTime.MinValue); // reserved by Itemify
         }
 
-        [Test]
-        public void SerializeItem()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SerializeItem()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void DeserializeItem_FromString()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void DeserializeItem_FromString()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void DeserializeItem_FromBadString()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void DeserializeItem_FromBadString()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         #endregion
 
@@ -257,7 +258,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveItem()
         {
-            var item = new DefaultItem();
+            var item = new DefaultItem(Guid.NewGuid());
 
             item.Name = "Example";
             item.Order = -1;
@@ -273,7 +274,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetItem()
         {
-            var item = new DefaultItem();
+            var item = new DefaultItem(Guid.NewGuid());
 
             item.Name = "Example";
             item.Order = -1;
@@ -308,7 +309,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetItem_SetValuesToNull()
         {
-            var item = new DefaultItem(DeviceType.Meter);
+            var item = new DefaultItem(Guid.NewGuid(), DeviceType.Meter);
 
             item.Name = "Example";
             item.Order = -1;
@@ -349,13 +350,13 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetItem_MinimumInformation()
         {
-            var item = new DefaultItem();
+            var item = new DefaultItem(Guid.NewGuid());
             var id = provider.Save(item);
             var saved = provider.GetItemByReference(item);
-           
+
             Assert.AreEqual(id, saved.Guid);
             Assert.AreEqual(0, saved.Revision);
-            Assert.AreEqual("DeviceType", saved.Name);
+            Assert.AreEqual("[unknown]", saved.Name);
             Assert.AreEqual(0, saved.Order);
             Assert.AreEqual(null, saved.ValueDate);
             Assert.AreEqual(null, saved.ValueNumber);
@@ -373,7 +374,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveExisting_NotExisting()
         {
-            var item = new DefaultItem();
+            var item = new DefaultItem(Guid.NewGuid(), DeviceType.Actor);
 
             Assert.Throws<ItemNotFoundException>(() => provider.SaveExisting(item));
         }
@@ -381,7 +382,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveNew()
         {
-            var item = new DefaultItem();
+            var item = new DefaultItem(Guid.NewGuid(), DeviceType.Actor);
 
             item.Name = "Example";
             item.Order = -1;
@@ -397,7 +398,7 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveNewAndGet()
         {
-            var item = new DefaultItem();
+            var item = new DefaultItem(Guid.NewGuid(), DeviceType.Actor);
 
             item.Order = Int32.MaxValue;
             item.ValueDate = new DateTime(2100, 1, 1);
@@ -417,7 +418,7 @@ namespace Itemify.Core.Spec
             Assert.AreEqual(actual.Modified, item.Modified);
             Assert.IsFalse(actual.IsParentResolved);
             Assert.AreEqual(actual.Debug, false);
-            Assert.AreEqual(actual.Name, "DeviceType");
+            Assert.AreEqual(actual.Name, "[Actor]");
             Assert.AreEqual(actual.Order, Int32.MaxValue);
             Assert.AreEqual(actual.Parent, provider.Root);
             Assert.AreEqual(actual.Revision, 0);
@@ -433,143 +434,212 @@ namespace Itemify.Core.Spec
 
 
         [Test]
-        public void SetRelation_ToSingleItem()
+        public void SetRelation_ToTwoItems()
         {
-            throw new NotImplementedException();
+            var itemA = new DefaultItem(Guid.NewGuid(), DeviceType.Sensor);
+            var itemB = new DefaultItem(Guid.NewGuid(), SensorType.Temperature);
+            var itemC = new DefaultItem(Guid.NewGuid(), SensorType.SetTemperature);
+
+            provider.SaveNew(itemA);
+            provider.SaveNew(itemB);
+            provider.SaveNew(itemC);
+
+            provider.SetRelations(itemA, itemB, itemC);
+
+            var actual = provider.GetItemByReference(itemA, ItemResolving.Default.RelatedItemsOfType("test", SensorType.Temperature));
+
+            Assert.AreEqual(1, actual.Related.Count);
+            Assert.AreEqual(itemB.Guid, actual.Related.First().Guid);
+            Assert.AreEqual(itemB.Type, actual.Related.First().Type);
+
+            actual = provider.GetItemByReference(itemA, ItemResolving.Default.RelatedItemsOfType(SensorType.SetTemperature));
+
+            Assert.AreEqual(1, actual.Related.Count);
+            Assert.AreEqual(itemC.Guid, actual.Related.First().Guid);
+            Assert.AreEqual(itemC.Type, actual.Related.First().Type);
+
+            actual = provider.GetItemByReference(itemA, ItemResolving.Default.RelatedItemsOfType(SensorType.Temperature, SensorType.SetTemperature));
+            Assert.AreEqual(2, actual.Related.Count);
         }
 
         [Test]
-        public void SetRelation_ToSeveralItems()
+        public void SetRelation_Bidirectional()
         {
-            throw new NotImplementedException();
+            var itemA = new DefaultItem(Guid.NewGuid(), DeviceType.Sensor);
+            var itemB = new DefaultItem(Guid.NewGuid(), SensorType.Temperature);
+            var itemC = new DefaultItem(Guid.NewGuid(), SensorType.SetTemperature);
+
+            provider.SaveNew(itemA);
+            provider.SaveNew(itemB);
+            provider.SaveNew(itemC);
+
+            provider.SetRelations(itemA, itemB, itemC);
+
+            var actual = provider.GetItemByReference(itemB, ItemResolving.Default.RelatedItemsOfType(DeviceType.Sensor));
+
+            Assert.AreEqual(1, actual.Related.Count);
+            Assert.AreEqual(itemA.Guid, actual.Related.First().Guid);
+            Assert.AreEqual(itemA.Type, actual.Related.First().Type);
         }
 
         [Test]
-        public void SetRelation_ToSingleItemTwice()
+        public void RemoveRelation()
         {
-            throw new NotImplementedException();
-        }
+            var itemA = new DefaultItem(Guid.NewGuid(), DeviceType.Sensor);
+            var itemB = new DefaultItem(Guid.NewGuid(), SensorType.Temperature);
 
-        [Test]
-        public void SetRelation_ToSeveralItemsTwice()
-        {
-            throw new NotImplementedException();
-        }
+            provider.SaveNew(itemA);
+            provider.SaveNew(itemB);
 
-        [Test]
-        //[ExpectedException(typeof(ItemNotFoundException))]
-        public void SetRelation_ToNotExistingItem()
-        {
-            throw new NotImplementedException();
-        }
+            provider.SetRelations(itemA, itemB);
 
-        [Test]
-        //[ExpectedException(typeof(Exception))]
-        public void SetRelation_ToSameItem()
-        {
-            throw new NotImplementedException();
-        }
+            var actual = provider.GetItemByReference(itemA, ItemResolving.Default.RelatedItemsOfType(SensorType.Temperature));
+            Assert.AreEqual(1, actual.Related.Count);
 
-        [Test]
-        //[ExpectedException(typeof(Exception))]
-        public void SetRelation_ToRootItem()
-        {
-            throw new NotImplementedException();
-        }
+            provider.RemoveRelations(itemA, SensorType.Brightness);
 
-        [Test]
-        public void RemoveRelation_ToSingleItem()
-        {
-            throw new NotImplementedException();
-        }
+            actual = provider.GetItemByReference(itemA, ItemResolving.Default.RelatedItemsOfType(SensorType.Temperature));
+            Assert.AreEqual(1, actual.Related.Count);
 
-        [Test]
-        public void RemoveRelation_ToSeveralItems()
-        {
-            throw new NotImplementedException();
-        }
+            provider.RemoveRelations(itemA, SensorType.Temperature);
 
-        [Test]
-        public void RemoveRelation_ToSingleItemTwice()
-        {
-            throw new NotImplementedException();
+            actual = provider.GetItemByReference(itemA, ItemResolving.Default.RelatedItemsOfType(SensorType.Temperature));
+            Assert.AreEqual(0, actual.Related.Count);
         }
 
 
-        [Test]
-        public void SaveAndGetNewItem_WithNewRelation()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SetRelation_ToSeveralItems()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetNewItem_WithExistingRelation()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SetRelation_ToSingleItemTwice()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetNewItem_WithNotExistingRelation()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SetRelation_ToSeveralItemsTwice()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetNewItem_WithNewRelations()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        ////[ExpectedException(typeof(ItemNotFoundException))]
+        //public void SetRelation_ToNotExistingItem()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetNewItem_WithExistingRelations()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        ////[ExpectedException(typeof(Exception))]
+        //public void SetRelation_ToSameItem()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
+        //[Test]
+        ////[ExpectedException(typeof(Exception))]
+        //public void SetRelation_ToRootItem()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetNewItem_WithExistingAndNewRelations()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void RemoveRelation_ToSingleItem()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
+        //[Test]
+        //public void RemoveRelation_ToSeveralItems()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetExistingItem_WithNewRelation()
-        {
-            throw new NotImplementedException();
-        }
-
-        [Test]
-        public void SaveAndGetExistingItem_WithExistingRelation()
-        {
-            throw new NotImplementedException();
-        }
-
-        [Test]
-        public void SaveAndGetExistingItem_WithNotExistingRelation()
-        {
-            throw new NotImplementedException();
-        }
-
-        [Test]
-        public void SaveAndGetExistingItem_WithNewRelations()
-        {
-            throw new NotImplementedException();
-        }
-
-        [Test]
-        public void SaveAndGetExistingItem_WithExistingRelations()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void RemoveRelation_ToSingleItemTwice()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
 
-        [Test]
-        public void SaveAndGetExistingItem_WithExistingAndNewRelations()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SaveAndGetNewItem_WithNewRelation()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //[Test]
+        //public void SaveAndGetNewItem_WithExistingRelation()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //[Test]
+        //public void SaveAndGetNewItem_WithNotExistingRelation()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //[Test]
+        //public void SaveAndGetNewItem_WithNewRelations()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //[Test]
+        //public void SaveAndGetNewItem_WithExistingRelations()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+
+        //[Test]
+        //public void SaveAndGetNewItem_WithExistingAndNewRelations()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+
+        //[Test]
+        //public void SaveAndGetExistingItem_WithNewRelation()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //[Test]
+        //public void SaveAndGetExistingItem_WithExistingRelation()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //[Test]
+        //public void SaveAndGetExistingItem_WithNotExistingRelation()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //[Test]
+        //public void SaveAndGetExistingItem_WithNewRelations()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //[Test]
+        //public void SaveAndGetExistingItem_WithExistingRelations()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+
+        //[Test]
+        //public void SaveAndGetExistingItem_WithExistingAndNewRelations()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         #endregion
 
@@ -581,128 +651,140 @@ namespace Itemify.Core.Spec
         [Test]
         public void SaveAndGetNewItem_WithNewChild()
         {
-            var item = new DefaultItem(DeviceType.Sensor);
-            var child = new DefaultItem(SensorType.Temperature);
+            var item = new DefaultItem(Guid.NewGuid(), DeviceType.Sensor);
+            var child = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
 
             provider.SaveNew(item);
             provider.SaveNew(child);
 
-            var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType("temp"));
+            var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
 
             Assert.AreEqual(1, actual.Children.Count);
-            Assert.AreEqual(item.Children.First().Guid, actual.Children.First().Guid);
-            Assert.AreEqual(item.Children.First().Type, actual.Children.First().Type);
+            Assert.AreEqual(child.Guid, actual.Children.First().Guid);
+            Assert.AreEqual(child.Type, actual.Children.First().Type);
 
             var rootChildren = provider.GetChildrenOfItemByReference(provider.Root, SensorType.Temperature, DeviceType.Sensor).ToArray();
-            Assert.AreEqual(2, rootChildren.Length);
+            Assert.AreEqual(1, rootChildren.Length);
             Assert.AreEqual(1, rootChildren.Count(k => k.Type.Equals(DeviceType.Sensor)));
-            Assert.AreEqual(1, rootChildren.Count(k => k.Type.Equals(SensorType.Temperature)));
         }
 
         [Test]
         public void SaveAndGetNewItem_WithExistingChild()
         {
-            var item = new DefaultItem(DeviceType.Sensor);
-            var child = new DefaultItem(SensorType.Temperature);
+            var item = new DefaultItem(Guid.NewGuid(), DeviceType.Sensor);
+            var child = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
 
+            provider.SaveNew(item);
             provider.SaveNew(child);
 
             var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
 
             Assert.AreEqual(1, actual.Children.Count);
-            Assert.AreEqual(item.Children.First().Guid, actual.Children.First().Guid);
-            Assert.AreEqual(item.Children.First().Type, actual.Children.First().Type);
+            Assert.AreEqual(child.Guid, actual.Children.First().Guid);
+            Assert.AreEqual(child.Type, actual.Children.First().Type);
         }
+
+        [Test]
+        public void SaveAndGetNewItem_WithExistingChild_MissingId()
+        {
+            var item = new DefaultItem(DeviceType.Sensor);
+
+            Assert.Throws<Exception>(() =>
+            {
+                provider.SaveNew(item);
+            });
+        }
+
 
         [Test]
         public void SaveAndGetNewItem_WithNewChildren()
         {
-            var item = new DefaultItem(DeviceType.Sensor);
+            var item = new DefaultItem(Guid.NewGuid(), DeviceType.Sensor);
 
-            var childA = new DefaultItem(SensorType.Temperature);
-            var childB = new DefaultItem(SensorType.Temperature);
-            var childC = new DefaultItem(SensorType.Temperature);
+            var childA = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
+            var childB = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
+            var childC = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
 
             provider.SaveNew(item);
-            new[] {childA, childB, childC}.ForEach(k => provider.SaveNew(k));
+            new[] { childA, childB, childC }.ForEach(k => provider.SaveNew(k));
 
             var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
 
             Assert.AreEqual(3, actual.Children.Count);
-            Assert.AreEqual(item.Children.Skip(0).First().Guid, actual.Children.Skip(0).First().Guid);
-            Assert.AreEqual(item.Children.Skip(0).First().Guid, actual.Children.Skip(0).First().Guid);
+            Assert.AreEqual(childA.Guid, actual.Children.Skip(0).First().Guid);
+            Assert.AreEqual(childA.Type, actual.Children.Skip(0).First().Type);
 
-            Assert.AreEqual(item.Children.Skip(1).First().Guid, actual.Children.Skip(1).First().Guid);
-            Assert.AreEqual(item.Children.Skip(1).First().Guid, actual.Children.Skip(1).First().Guid);
+            Assert.AreEqual(childB.Guid, actual.Children.Skip(1).First().Guid);
+            Assert.AreEqual(childB.Type, actual.Children.Skip(1).First().Type);
 
-            Assert.AreEqual(item.Children.Skip(2).First().Guid, actual.Children.Skip(2).First().Guid);
-            Assert.AreEqual(item.Children.Skip(2).First().Guid, actual.Children.Skip(2).First().Guid);
+            Assert.AreEqual(childC.Guid, actual.Children.Skip(2).First().Guid);
+            Assert.AreEqual(childC.Type, actual.Children.Skip(2).First().Type);
         }
 
 
         [Test]
         public void SaveAndGetNewItem_WithNewChildren_Implicit()
         {
-            var item = new DefaultItem(DeviceType.Sensor);
+            var item = new DefaultItem(Guid.NewGuid(), DeviceType.Sensor);
             provider.SaveNew(item);
 
-            var childA = new DefaultItem(SensorType.Temperature);
-            var childB = new DefaultItem(SensorType.Temperature);
-            var childC = new DefaultItem(SensorType.Temperature);
+            var childA = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
+            var childB = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
+            var childC = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
 
             new[] { childA, childB, childC }.ForEach(k => provider.SaveNew(k));
 
             var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
 
             Assert.AreEqual(3, actual.Children.Count);
-            Assert.AreEqual(item.Children.Skip(0).First().Guid, actual.Children.Skip(0).First().Guid);
-            Assert.AreEqual(item.Children.Skip(0).First().Guid, actual.Children.Skip(0).First().Guid);
+            Assert.AreEqual(childA.Guid, actual.Children.Skip(0).First().Guid);
+            Assert.AreEqual(childA.Type, actual.Children.Skip(0).First().Type);
 
-            Assert.AreEqual(item.Children.Skip(1).First().Guid, actual.Children.Skip(1).First().Guid);
-            Assert.AreEqual(item.Children.Skip(1).First().Guid, actual.Children.Skip(1).First().Guid);
+            Assert.AreEqual(childB.Guid, actual.Children.Skip(1).First().Guid);
+            Assert.AreEqual(childB.Type, actual.Children.Skip(1).First().Type);
 
-            Assert.AreEqual(item.Children.Skip(2).First().Guid, actual.Children.Skip(2).First().Guid);
-            Assert.AreEqual(item.Children.Skip(2).First().Guid, actual.Children.Skip(2).First().Guid);
+            Assert.AreEqual(childC.Guid, actual.Children.Skip(2).First().Guid);
+            Assert.AreEqual(childC.Type, actual.Children.Skip(2).First().Type);
         }
 
 
 
-        [Test]
-        public void SaveAndGetExistingItem_WithNewChild()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SaveAndGetExistingItem_WithNewChild()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetExistingItem_WithExistingChild()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SaveAndGetExistingItem_WithExistingChild()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetExistingItem_WithNotExistingChild()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SaveAndGetExistingItem_WithNotExistingChild()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetExistingItem_WithNewChildren()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SaveAndGetExistingItem_WithNewChildren()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        [Test]
-        public void SaveAndGetExistingItem_WithExistingChildren()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SaveAndGetExistingItem_WithExistingChildren()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
 
-        [Test]
-        public void SaveAndGetExistingItem_WithExistingAndNewChildren()
-        {
-            throw new NotImplementedException();
-        }
+        //[Test]
+        //public void SaveAndGetExistingItem_WithExistingAndNewChildren()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         #endregion
 

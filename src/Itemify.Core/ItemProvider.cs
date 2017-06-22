@@ -17,6 +17,7 @@ namespace Itemify.Core
         private readonly ILogWriter log;
 
         public const string CHILDREN_MAPPING_TABLE_NAME = "ChildrenMapping";
+        public const string RELATIONS_MAPPING_TABLE_NAME = "RelationsMapping";
 
         public IItemReference Root => DefaultItem.Root;
 
@@ -50,8 +51,9 @@ namespace Itemify.Core
 
             var guid = provider.Upsert(actualItem.Type, actualItem.GetEntity());
 
-            if (item.Children.Count > 0)
-                saveChildren(item);
+            // Should not save children implicitly
+            // if (item.Children.Count > 0)
+            //    saveChildren(item);
 
             return guid;
         }
@@ -68,8 +70,9 @@ namespace Itemify.Core
             {
                 provider.Update(actualItem.Type, actualItem.GetEntity());
 
-                if (item.Children.Count > 0)
-                    saveChildren(item);
+                // Should not save children implicitly
+                // if (item.Children.Count > 0)
+                //    saveChildren(item);
             }
             catch (EntitityNotFoundException e)
             {
@@ -82,9 +85,9 @@ namespace Itemify.Core
             if (item == null) throw new ArgumentNullException(nameof(item));
 
             var guid = provider.Insert(item.Type, item.GetEntity());
-            var relations = new KeyValuePair<Guid, string>(item.Parent.Guid, parseTypeName(item.Parent.Type));
+            var relations = new KeyValuePair<Guid, string>(item.Guid, parseTypeName(item.Type));
 
-            provider.InsertItemRelations(parseTypeName(item.Parent.Type), item.Parent.Guid, new[] {relations}, CHILDREN_MAPPING_TABLE_NAME, true);
+            provider.InsertItemRelations(parseTypeName(item.Parent.Type), item.Parent.Guid, new[] {relations}, CHILDREN_MAPPING_TABLE_NAME, false);
 
             return guid;
         }
@@ -129,17 +132,54 @@ namespace Itemify.Core
             return getChildrenOfItem(r, types);
         }
 
-        private void saveChildren(DefaultItem child)
+        public IEnumerable<DefaultItem> GetRelationsOfItemByReference(IItemReference parent, params string[] types)
         {
-            var relations = child.Children
+            if (parent == null) throw new ArgumentNullException(nameof(parent));
+            if (types == null) throw new ArgumentNullException(nameof(types));
+
+            return getRelationsOfItem(parent, types);
+        }
+
+        public void AddRelations(IItemReference itemA, params IItemReference[] relatedItems)
+        {
+            var relations = relatedItems
                 .Select(k => new KeyValuePair<Guid, string>(k.Guid, k.Type));
 
-            provider.InsertItemRelations(child.Type, child.Guid, relations, CHILDREN_MAPPING_TABLE_NAME, true);
+            provider.InsertItemRelations(itemA.Type, itemA.Guid, relations, RELATIONS_MAPPING_TABLE_NAME, false);
+        }
 
-            var items = child.Children.OfType<DefaultItem>();
-            foreach (var item in items)
+        public void SetRelations(IItemReference itemA, params IItemReference[] relatedItems)
+        {
+            var relations = relatedItems
+                .Select(k => new KeyValuePair<Guid, string>(k.Guid, k.Type));
+
+            provider.InsertItemRelations(itemA.Type, itemA.Guid, relations, RELATIONS_MAPPING_TABLE_NAME, true);
+        }
+
+        public void RemoveRelations(DefaultItem itemA)
+        {
+            provider.InsertItemRelations(itemA.Type, itemA.Guid, new KeyValuePair<Guid, string>[0], RELATIONS_MAPPING_TABLE_NAME, true);
+        }
+        
+        public void RemoveRelations(IItemReference itemA, params string[] types)
+        {
+            if (itemA == null) throw new ArgumentNullException(nameof(itemA));
+            if (types == null) throw new ArgumentNullException(nameof(types));
+
+            provider.DeleteItemRelations(itemA.Type, itemA.Guid, RELATIONS_MAPPING_TABLE_NAME, types);
+        }
+
+        private void saveChildren(DefaultItem item)
+        {
+            var relations = item.Children
+                .Select(k => new KeyValuePair<Guid, string>(k.Guid, k.Type));
+
+            provider.InsertItemRelations(item.Type, item.Guid, relations, CHILDREN_MAPPING_TABLE_NAME, true);
+
+            var children = item.Children.OfType<DefaultItem>();
+            foreach (var child in children)
             {
-                Save(item);
+                Save(child);
             }
         }
 
@@ -151,6 +191,12 @@ namespace Itemify.Core
             {
                 var children = getChildrenOfItem(item, resolving.ChildrenTypes);
                 item.AddChildren(children);
+            }
+
+            if (resolving.RelationsTypes.Any())
+            {
+                var relatedItems = getRelationsOfItem(item, resolving.RelationsTypes);
+                item.AddRelated(relatedItems);
             }
 
             if (resolving.ResolveParent)
@@ -168,7 +214,7 @@ namespace Itemify.Core
             {
                 var typeName = parseTypeName(type);
                 var children = provider.QueryItemsByRelation(itemRef.Type, itemRef.Guid, typeName,
-                        CHILDREN_MAPPING_TABLE_NAME)
+                        CHILDREN_MAPPING_TABLE_NAME, false)
                     .Select(child => new DefaultItem(child))
                     .ToArray();
 
@@ -180,6 +226,27 @@ namespace Itemify.Core
                 log.Describe($"Resolved {children.Length} children of type: {type}.");
             }
         }
+
+        private IEnumerable<DefaultItem> getRelationsOfItem(IItemReference itemRef, IEnumerable<string> types)
+        {
+
+            foreach (var type in types)
+            {
+                var typeName = parseTypeName(type);
+                var relatedItems = provider.QueryItemsByRelation(itemRef.Type, itemRef.Guid, typeName,
+                        RELATIONS_MAPPING_TABLE_NAME, true)
+                    .Select(child => new DefaultItem(child))
+                    .ToArray();
+
+                foreach (var item in relatedItems)
+                {
+                    yield return item;
+                }
+
+                log.Describe($"Resolved {relatedItems.Length} related item(s) of type: {type}.");
+            }
+        }
+
 
         private static string parseTypeName(string name)
         {

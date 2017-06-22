@@ -8,8 +8,7 @@
     "Newtonsoft.Json": "9.0.1"
   },
   "frameworks": {
-     "netcoreapp1.1": {
-      //"imports": "dnxcore50",
+    "netcoreapp1.1": {
       "imports": "portable-net45",
       "dependencies": {
         "Microsoft.NETCore.App": {
@@ -18,16 +17,10 @@
 
         }
       },
-      
-        "buildOptions": {
-          "define": [ "NET_CORE" ]
-        }
+
+      "buildOptions": {
+        "define": [ "NET_CORE" ]
+      }
     }
-    // ,
-    // "net46": {
-    //   "dependencies": {
-    //     "NETStandard.Library": "1.6.1"
-    //   }
-    // }
   }
 }

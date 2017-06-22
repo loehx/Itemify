@@ -33,6 +33,13 @@ namespace Itemify.Core.Item
             related.SetReadOnly(true);
         }
 
+        public DefaultItem(Guid newGuid)
+            : base(new ItemEntity() { Guid = newGuid, Type = DefaultTypes.Unknown }, Root, true)
+        {
+            children.SetReadOnly(true);
+            related.SetReadOnly(true);
+        }
+
         public DefaultItem(Guid newGuid, string type)
             : base(new ItemEntity() { Guid = newGuid, Type = type }, Root, true)
         {

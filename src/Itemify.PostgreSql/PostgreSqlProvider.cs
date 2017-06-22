@@ -40,10 +40,14 @@ namespace Itemify.Core.PostgreSql
         public bool CreateTable<TSchema>(string tableName)
             where TSchema : IEntityBase
         {
-            log.Describe($"{nameof(CreateTable)}<{typeof(TSchema).Name}>: {tableName}");
-
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentNullException(nameof(tableName));
+
+            var resolvedTableName = ResolveTableName(tableName);
+            log.Describe($"{nameof(CreateTable)}<{typeof(TSchema).Name}>: {tableName} => {resolvedTableName}");
+
+            if (resolvedTableName.Split('.').Length != 2)
+                throw new ArgumentException("A resolved table name must contain the schema and a dot.", nameof(tableName));
 
             var type = typeof(TSchema);
             var columns = ReflectionUtil.GetColumnSchemas(type).ToArray();
@@ -52,7 +56,7 @@ namespace Itemify.Core.PostgreSql
                 throw new Exception("No columns defined by " + nameof(PostgreSqlColumnAttribute) + " in class: " + type.Name);
 
             sql.AppendFormat("CREATE TABLE ")
-                .WriteLine(ResolveTableName(tableName))
+                .WriteLine(ResolveTableName(resolvedTableName))
                 .WriteLine("(");
 
             foreach (var column in columns)
@@ -85,6 +89,8 @@ namespace Itemify.Core.PostgreSql
         {
             if (resolvedTableName == null) throw new ArgumentNullException(nameof(resolvedTableName));
             var sql = new StringBuilder();
+
+            resolvedTableName = ResolveTableName(resolvedTableName);
 
             var split = resolvedTableName.Split('.');
             if (split.Length != 2)
@@ -125,17 +131,25 @@ namespace Itemify.Core.PostgreSql
 
         public bool DropTable(string tableName)
         {
+            if (tableName == null) throw new ArgumentNullException(nameof(tableName));
             var sql = "DROP TABLE " + ResolveTableName(tableName);
             var affected = db.Execute(sql);
             return affected > 0;
         }
+
+        public bool TryDropTable(string tableName)
+        {
+            tableName = ResolveTableName(tableName);
+            return TableExists(tableName) && DropTable(tableName);
+        }
+
 
         public string ResolveTableName(string tableName)
         {
             if (tableName.StartsWith($"\"{Schema}\"."))
                 return tableName;
 
-            return $"\"{Schema}\".\"{tableName}\"";
+            return $"\"{Schema}\".\"{tableName.ToCamelCase()}\"";
         }
 
         public void Insert(string tableName, IAnonymousEntity entity, bool merge = true)
@@ -146,7 +160,7 @@ namespace Itemify.Core.PostgreSql
         public Guid Insert(string tableName, IGloballyUniqueEntity entity, bool upsert = false, bool merge = true)
         {
             if (entity.Guid == Guid.Empty)
-                entity.Guid = Guid.NewGuid();
+                throw new Exception("Guid of entity cannot be empty.");
 
             var guid = Insert(tableName, entity, true, upsert, merge);
             if (guid != null)
@@ -419,7 +433,13 @@ namespace Itemify.Core.PostgreSql
                 var columns = GetColumns(reader)
                     .Select(name => GetColumnSchema<TEntity>(name, allColumns))
                     .ToArray();
+
+#if DEBUG
+                var valueSets = GetValueSets(reader).ToArray();
+                log.Describe(valueSets.Length + " item(s) received.");
+#else
                 var valueSets = GetValueSets(reader);
+#endif
 
                 foreach (var valueSet in valueSets)
                 {

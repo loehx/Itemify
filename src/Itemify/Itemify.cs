@@ -32,11 +32,6 @@ namespace Itemify
             provider.SaveExisting(item.GetInner());
         }
 
-        public void AddRelation(IItemReference source, IItemReference target)
-        {
-            throw new NotImplementedException();
-        }
-
         public Guid SaveNew(Item item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
@@ -49,6 +44,21 @@ namespace Itemify
             {
                 throw new Exception($"Item »{ item.Name }« could not be saved.", err);   
             }
+        }
+
+        public void SetRelations(IItemReference source, params IItemReference[] targets)
+        {
+            provider.SetRelations(source, targets);
+        }
+
+        public void AddRelations(IItemReference source, params IItemReference[] targets)
+        {
+            provider.AddRelations(source, targets);
+        }
+
+        public void RemoveRelations(IItemReference source, params string[] types)
+        {
+            provider.RemoveRelations(source, types);
         }
 
         public Item GetItemByReference(Guid guid, string type)
