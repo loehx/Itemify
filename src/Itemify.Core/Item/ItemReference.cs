@@ -46,5 +46,10 @@ namespace Itemify.Core.ItemAccess
 
             return 0;
         }
+
+        public override string ToString()
+        {
+            return $"<{Type}> {Guid}";
+        }
     }
 }

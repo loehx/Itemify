@@ -157,5 +157,10 @@ namespace Itemify
         {
             return provider.GetChildrenOfItemByReference(r, types).Select(Item.Wrap);
         }
+
+        public void RemoveItemByReference(IItemReference r)
+        {
+            provider.RemoveItemByReference(r);
+        }
     }
 }

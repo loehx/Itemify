@@ -290,5 +290,14 @@ namespace Itemify.Core
         {
             return name.ToCamelCase();
         }
+
+        public void RemoveItemByReference(IItemReference r)
+        {
+            if (r == null) throw new ArgumentNullException(nameof(r));
+
+            provider.Delete(r.Type, r.Guid);
+
+            log.Describe($"Deleted item '{r}'.");
+        }
     }
 }

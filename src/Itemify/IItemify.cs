@@ -11,6 +11,8 @@ namespace Itemify
         Item GetItemByReference(Guid guid, string type, ItemResolving resolving);
         Item GetItemByReference(IItemReference r);
         Item GetItemByReference(IItemReference r, ItemResolving resolving);
+        void RemoveItemByReference(IItemReference r);
+
         IEnumerable<Item> GetChildrenOfItemByReference(IItemReference r, params string[] types);
         Guid Save(Item item);
         void SaveExisting(Item item);

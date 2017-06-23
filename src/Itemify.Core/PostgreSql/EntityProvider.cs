@@ -71,7 +71,7 @@ namespace Itemify.Core.PostgreSql
             tableName = resolveTable<ItemEntity>(tableName);
             mappingTableName = resolveTable<ItemRelationEntity>(mappingTableName);
             var parameters = new object[] { guid, tableName }
-                .Concat(targetTables.Select(k => resolveTable<ItemEntity>(k)))
+                .Concat(targetTables.Select(resolveTable<ItemEntity>))
                 .ToArray();
 
             postgreSql.Execute("DELETE FROM " + mappingTableName +
@@ -81,7 +81,8 @@ namespace Itemify.Core.PostgreSql
         public void Delete(string tableName, Guid guid)
         {
             tableName = resolveTable<ItemEntity>(tableName);
-            postgreSql.Execute("DELETE FROM " + tableName + " WHERE \"guid\" = @0 AND \"table_name\" LIKE @1", guid, tableName);
+            var affected = postgreSql.Execute($"DELETE FROM {tableName} WHERE \"Guid\" = @0", guid);
+            log.Describe($"Deleted {affected} item(s) successfully.");
         }
 
         public IEnumerable<ItemEntity> QueryItemsByRelation(string tableName, Guid guid, string targetTableName, string mappingTableName, bool bidirectional)

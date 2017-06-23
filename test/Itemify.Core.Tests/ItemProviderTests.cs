@@ -430,6 +430,30 @@ namespace Itemify.Core.Spec
 
         #endregion
         
+        #region -----[   Remove item   ]------------------------------------------------------------------------------------------------------------------------------
+
+        [Test]
+        public void RemoveItem()
+        {
+            var item = new DefaultItem(Guid.NewGuid(), DeviceType.Actor)
+            {
+                ValueDate = DateTime.MinValue.AddMilliseconds(1)
+            };
+
+            var id = provider.Save(item);
+            Assert.AreEqual(id, item.Guid);
+
+            var found = provider.GetItemByReference(item);
+            Assert.IsNotNull(found);
+
+            provider.RemoveItemByReference(item);
+
+            found = provider.GetItemByReference(item);
+            Assert.IsNull(found);
+        }
+      
+        #endregion
+
         #region -----[   Query item   ]------------------------------------------------------------------------------------------------------------------------------
 
         [Test]

@@ -406,9 +406,9 @@ namespace Itemify.Core.PostgreSql
             }
         }
 
-        public void Execute(string query, params object[] parameters)
+        public int Execute(string query, params object[] parameters)
         {
-            db.Execute(query, parameters);
+            return db.Execute(query, parameters);
         }
 
         public IEnumerable<TEntity> Query<TEntity>(string query, params object[] parameters)

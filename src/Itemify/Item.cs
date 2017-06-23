@@ -160,5 +160,10 @@ namespace Itemify
         {
             return item == null ? null : new Item(item);
         }
+
+        public override string ToString()
+        {
+            return $"{Name} <{Type}> ({(IsNew ? "NEW" : "REV:" + Revision)})";
+        }
     }
 }
