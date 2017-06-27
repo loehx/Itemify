@@ -26,18 +26,6 @@ namespace Itemify.Core.PostgreSql.Spec
         }
 
 
-
-        [Test]
-        public void ConnectionPool()
-        {
-            var connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 2, 5000);
-            var providerA = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
-            var providerB = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
-
-            Assert.AreEqual(1, providerA.ConnectionId);
-            Assert.AreEqual(2, providerB.ConnectionId);
-        }
-
         [Test]
         public void ConnectionPool_ConnectionMaxReached()
         {

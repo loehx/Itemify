@@ -9,14 +9,20 @@ namespace Itemify.Core.PostgreSql
 {
     internal class PostgreSqlDatabase : IDisposable
     {
+        private readonly PostgreSqlConnectionPool pool;
         private readonly ILogWriter log;
         private NpgsqlConnection connection;
+        private PostgreSqlConnectionContext context;
 
 
-        public PostgreSqlDatabase(PostgreSqlConnectionContext context, ILogWriter log)
+        public PostgreSqlDatabase(PostgreSqlConnectionPool pool, ILogWriter log)
         {
+            this.pool = pool;
             this.log = log;
-            connection = context.Connection;
+            this.context = pool.GetContext();
+            connection = this.context.Connection;
+
+            Debug.WriteLine("+ Open: " + this.context.ConnectionId);
         }
 
         public int Execute(string sql)
@@ -150,10 +156,11 @@ namespace Itemify.Core.PostgreSql
 
         public void Dispose()
         {
-            if (connection != null)
+            if (context != null)
             {
-                connection.Dispose();
-                connection = null;
+                Debug.WriteLine("- Dispose: " + this.context.ConnectionId);
+                context.Dispose();
+                context = null;
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.Common;
 using Itemify.Core;
 namespace Itemify
 {
@@ -14,22 +15,22 @@ namespace Itemify
         private int connectionPoolSize;
         private TimeSpan timeout;
 
-        public ItemifySettings()
+        public ItemifySettings(string host, int port, string username, string password, string database, int connectionPoolSize, TimeSpan timeout)
         {
-            host = "134.168.62.120";
-            port = 5432;
-            username = "postgres_dawid";
-            password = "LustitiaDev";
-            database = "postgres_dawid";
-            connectionPoolSize = 50;
-            timeout = TimeSpan.FromSeconds(5);
+            this.host = host;
+            this.port = port;
+            this.username = username;
+            this.password = password;
+            this.database = database;
+            this.connectionPoolSize = connectionPoolSize;
+            this.timeout = timeout;
 
             providerSettings = new ItemProviderSettings
             {
                 Timeout = (int)timeout.TotalMilliseconds,
                 Schema = "default",
                 MaxConnections = connectionPoolSize,
-                PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize)
+                PostgreSqlConnectionString = GetConnectionString(Host1, port, username, password, database, connectionPoolSize)
             };
         }
 
@@ -37,12 +38,12 @@ namespace Itemify
         {
             get
             {
-                return host;
+                return Host1;
             }
             set
             {
-                host = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
+                Host1 = value;
+                providerSettings.PostgreSqlConnectionString = GetConnectionString(Host1, port, username, password, database, connectionPoolSize);
             }
         }
 
@@ -55,7 +56,7 @@ namespace Itemify
             set
             {
                 port = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
+                providerSettings.PostgreSqlConnectionString = GetConnectionString(Host1, port, username, password, database, connectionPoolSize);
             }
         }
 
@@ -68,7 +69,7 @@ namespace Itemify
             set
             {
                 username = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
+                providerSettings.PostgreSqlConnectionString = GetConnectionString(Host1, port, username, password, database, connectionPoolSize);
             }
         }
 
@@ -81,7 +82,7 @@ namespace Itemify
             set
             {
                 password = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
+                providerSettings.PostgreSqlConnectionString = GetConnectionString(Host1, port, username, password, database, connectionPoolSize);
             }
         }
 
@@ -94,7 +95,7 @@ namespace Itemify
             set
             {
                 database = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
+                providerSettings.PostgreSqlConnectionString = GetConnectionString(Host1, port, username, password, database, connectionPoolSize);
             }
         }
 
@@ -108,7 +109,7 @@ namespace Itemify
             {
                 connectionPoolSize = value;
                 providerSettings.MaxConnections = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
+                providerSettings.PostgreSqlConnectionString = GetConnectionString(Host1, port, username, password, database, connectionPoolSize);
             }
         }
 
@@ -132,6 +133,8 @@ namespace Itemify
         }
 
         public string PostgreSqlConnectionString => providerSettings.PostgreSqlConnectionString;
+
+        public string Host1 { get => host; set => host = value; }
 
         private static string GetConnectionString(string host, int port, string username, string password, string database, int connections)
         {

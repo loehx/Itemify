@@ -9,7 +9,7 @@ namespace Itemify.Core.PostgreSql
 {
     public class PostgreSqlConnectionPool : IDisposable
     {
-        private readonly Queue<NpgsqlConnection> _available = new Queue<NpgsqlConnection>();
+        private Queue<NpgsqlConnection> _available = new Queue<NpgsqlConnection>();
         private readonly string _connectionString;
         private readonly int _maxCount;
         private readonly object _syncRoot;
@@ -44,6 +44,8 @@ namespace Itemify.Core.PostgreSql
         {
             NpgsqlConnection c;
             var waitTime = 0;
+
+            if (_available == null) throw new Exception("Connection pool already disposed.");
 
             while (_maxCount == count && _available.Count == 0)
             {
@@ -103,6 +105,8 @@ namespace Itemify.Core.PostgreSql
                             c.Dispose();
                         }
                     }
+
+                    _available = null;
                 }
             }
         }

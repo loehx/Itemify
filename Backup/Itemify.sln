@@ -1,24 +1,25 @@
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.14
+VisualStudioVersion = 15.0.26114.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1C330E74-55CB-4104-9BF6-8F9BC0770AAB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Itemify", "src\Itemify\Itemify.csproj", "{3F6D073C-EF6C-4558-953C-5117844CBDFD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Itemify.Shared", "src\Itemify.Shared\Itemify.Shared.csproj", "{39E1980E-DDAF-418A-9D00-50A0E054C72A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Itemify.PostgreSql", "src\Itemify.PostgreSql\Itemify.PostgreSql.csproj", "{FAD52536-7F7B-41F5-9C7A-5F4431A6C117}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Itemify.Core", "src\Itemify.Core\Itemify.Core.csproj", "{2E4A8899-3294-4C9D-9D2F-07CC97F79BF8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Itemify.Spec", "test\Itemify.Spec\Itemify.Spec.csproj", "{054E0172-B4B3-4EF0-965E-918FE2D10C05}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Itemify.Core.Spec", "test\Itemify.Core.Tests\Itemify.Core.Spec.xproj", "{B5790E48-F948-4981-9066-A338D024B5AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Itemify.Core.PostgreSql.Spec", "test\Itemify.Core.PostgreSql.Spec\Itemify.Core.PostgreSql.Spec.csproj", "{673E1119-6557-4870-AAEE-39E9931526A0}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5972DDBD-7234-450B-A7FE-9442C81A285F}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Itemify", "src\Itemify\Itemify.csproj", "{3F6D073C-EF6C-4558-953C-5117844CBDFD}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Itemify.Shared", "src\Itemify.Shared\Itemify.Shared.csproj", "{39E1980E-DDAF-418A-9D00-50A0E054C72A}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Itemify.PostgreSql", "src\Itemify.PostgreSql\Itemify.PostgreSql.csproj", "{FAD52536-7F7B-41F5-9C7A-5F4431A6C117}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Itemify.Core", "src\Itemify.Core\Itemify.Core.csproj", "{2E4A8899-3294-4C9D-9D2F-07CC97F79BF8}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Itemify.Spec", "test\Itemify.Spec\Itemify.Spec.csproj", "{054E0172-B4B3-4EF0-965E-918FE2D10C05}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Itemify.Core.PostgreSql.Spec", "test\Itemify.Core.PostgreSql.Spec\Itemify.Core.PostgreSql.Spec.csproj", "{673E1119-6557-4870-AAEE-39E9931526A0}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Itemify.Core.Spec", "test\Itemify.Core.Tests\Itemify.Core.Spec.csproj", "{DCFD544E-2F6F-4408-A97F-89A92357206C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,14 +47,14 @@ Global
 		{054E0172-B4B3-4EF0-965E-918FE2D10C05}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{054E0172-B4B3-4EF0-965E-918FE2D10C05}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{054E0172-B4B3-4EF0-965E-918FE2D10C05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5790E48-F948-4981-9066-A338D024B5AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5790E48-F948-4981-9066-A338D024B5AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5790E48-F948-4981-9066-A338D024B5AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5790E48-F948-4981-9066-A338D024B5AE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{673E1119-6557-4870-AAEE-39E9931526A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{673E1119-6557-4870-AAEE-39E9931526A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{673E1119-6557-4870-AAEE-39E9931526A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{673E1119-6557-4870-AAEE-39E9931526A0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DCFD544E-2F6F-4408-A97F-89A92357206C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DCFD544E-2F6F-4408-A97F-89A92357206C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DCFD544E-2F6F-4408-A97F-89A92357206C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DCFD544E-2F6F-4408-A97F-89A92357206C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -64,7 +65,7 @@ Global
 		{FAD52536-7F7B-41F5-9C7A-5F4431A6C117} = {1C330E74-55CB-4104-9BF6-8F9BC0770AAB}
 		{2E4A8899-3294-4C9D-9D2F-07CC97F79BF8} = {1C330E74-55CB-4104-9BF6-8F9BC0770AAB}
 		{054E0172-B4B3-4EF0-965E-918FE2D10C05} = {5972DDBD-7234-450B-A7FE-9442C81A285F}
+		{B5790E48-F948-4981-9066-A338D024B5AE} = {5972DDBD-7234-450B-A7FE-9442C81A285F}
 		{673E1119-6557-4870-AAEE-39E9931526A0} = {5972DDBD-7234-450B-A7FE-9442C81A285F}
-		{DCFD544E-2F6F-4408-A97F-89A92357206C} = {5972DDBD-7234-450B-A7FE-9442C81A285F}
 	EndGlobalSection
 EndGlobal

@@ -14,40 +14,35 @@ namespace Itemify.Core.PostgreSql
 {
     public class PostgreSqlProvider : IDisposable
     {
-        private PostgreSqlConnectionContext context;
-        private readonly PostgreSqlDatabase db;
+        private readonly PostgreSqlConnectionPool connectionPool;
         private readonly ILogWriter log;
         private readonly string schema;
 
         public const string TABLE_PLACEHOLDER = "{table}";
 
         public string Schema => schema;
-        public int ConnectionId => context.ConnectionId;
 
         public PostgreSqlProvider(PostgreSqlConnectionPool connectionPool, ILogWriter log, string schema = "public")
         {
-            this.log = log;
+            this.connectionPool = connectionPool;
+            this.log = log.NewRegion(nameof(PostgreSqlDatabase));
             this.schema = schema;
-            context = connectionPool.GetContext();
-            db = new PostgreSqlDatabase(context, log.NewRegion(nameof(PostgreSqlDatabase)));
         }
 
         public void EnsureSchemaExists()
         {
-            db.Execute($"CREATE SCHEMA IF NOT EXISTS \"{Schema}\";");
+            Execute($"CREATE SCHEMA IF NOT EXISTS \"{Schema}\";");
         }
 
         public bool CreateTable<TSchema>(string tableName)
             where TSchema : IEntityBase
         {
+            tableName = ResolveTableName(tableName);
+
+            log.Describe($"{nameof(CreateTable)}<{typeof(TSchema).Name}>: {tableName}");
+
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentNullException(nameof(tableName));
-
-            var resolvedTableName = ResolveTableName(tableName);
-            log.Describe($"{nameof(CreateTable)}<{typeof(TSchema).Name}>: {tableName} => {resolvedTableName}");
-
-            if (resolvedTableName.Split('.').Length != 2)
-                throw new ArgumentException("A resolved table name must contain the schema and a dot.", nameof(tableName));
 
             var type = typeof(TSchema);
             var columns = ReflectionUtil.GetColumnSchemas(type).ToArray();
@@ -56,7 +51,7 @@ namespace Itemify.Core.PostgreSql
                 throw new Exception("No columns defined by " + nameof(PostgreSqlColumnAttribute) + " in class: " + type.Name);
 
             sql.AppendFormat("CREATE TABLE ")
-                .WriteLine(ResolveTableName(resolvedTableName))
+                .WriteLine(ResolveTableName(tableName))
                 .WriteLine("(");
 
             foreach (var column in columns)
@@ -82,19 +77,20 @@ namespace Itemify.Core.PostgreSql
 
             sql.WriteLine(")");
 
-            return db.Execute(sql.ToString()) > 0;
+            using (var db = getDb())
+                return db.Execute(sql.ToString()) > 0;
         }
 
-        public bool TableExists(string resolvedTableName)
+        public bool TableExists(string tableName)
         {
-            if (resolvedTableName == null) throw new ArgumentNullException(nameof(resolvedTableName));
+            if (tableName == null) throw new ArgumentNullException(nameof(tableName));
             var sql = new StringBuilder();
 
-            resolvedTableName = ResolveTableName(resolvedTableName);
+            tableName = ResolveTableName(tableName);
 
-            var split = resolvedTableName.Split('.');
+            var split = tableName.Split('.');
             if (split.Length != 2)
-                throw new ArgumentException("A resolved table name must contain the schema and a dot.", nameof(resolvedTableName));
+                throw new ArgumentException("A resolved table name must contain the schema and a dot.", nameof(tableName));
 
             var schema = split[0].Trim('"');
             var table = split[1].Trim('"');
@@ -105,8 +101,8 @@ namespace Itemify.Core.PostgreSql
             sql.AppendFormat("    AND    table_name = '{0}'", table).AppendLine();
             sql.AppendLine(");");
 
-            var result = db.QuerySingleValue(sql.ToString());
-            return true.Equals(result);
+            using (var db = getDb())
+                return true.Equals(db.QuerySingleValue(sql.ToString()));
         }
 
         public ICollection<string> GetTableNamesBySchema(string schema)
@@ -118,6 +114,7 @@ namespace Itemify.Core.PostgreSql
             sql.AppendLine("    FROM   information_schema.tables");
             sql.AppendFormat("    WHERE  table_schema = '{0}'", schema).AppendLine();
 
+            using (var db = getDb())
             using (var reader = db.Query(sql.ToString()))
             {
                 while (reader.Read())
@@ -131,25 +128,19 @@ namespace Itemify.Core.PostgreSql
 
         public bool DropTable(string tableName)
         {
-            if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-            var sql = "DROP TABLE " + ResolveTableName(tableName);
-            var affected = db.Execute(sql);
-            return affected > 0;
-        }
-
-        public bool TryDropTable(string tableName)
-        {
             tableName = ResolveTableName(tableName);
-            return TableExists(tableName) && DropTable(tableName);
-        }
 
+            var sql = "DROP TABLE " + ResolveTableName(tableName);
+            using (var db = getDb())
+                return db.Execute(sql) > 0;
+        }
 
         public string ResolveTableName(string tableName)
         {
             if (tableName.StartsWith($"\"{Schema}\"."))
                 return tableName;
 
-            return $"\"{Schema}\".\"{tableName.ToCamelCase()}\"";
+            return $"\"{Schema}\".\"{tableName}\"";
         }
 
         public void Insert(string tableName, IAnonymousEntity entity, bool merge = true)
@@ -160,7 +151,7 @@ namespace Itemify.Core.PostgreSql
         public Guid Insert(string tableName, IGloballyUniqueEntity entity, bool upsert = false, bool merge = true)
         {
             if (entity.Guid == Guid.Empty)
-                throw new Exception("Guid of entity cannot be empty.");
+                entity.Guid = Guid.NewGuid();
 
             var guid = Insert(tableName, entity, true, upsert, merge);
             if (guid != null)
@@ -244,8 +235,8 @@ namespace Itemify.Core.PostgreSql
                 query.WriteTabbedLine(2, "RETURNING \"" + pk.Name + '"');
             }
 
-            var result = db.QuerySingleValue(query.ToString(), values);
-            return result;
+            using (var db = getDb())
+                return db.QuerySingleValue(query.ToString(), values);
         }
 
         public int Update(string tableName, IEntityBase entity, bool merge)
@@ -290,8 +281,8 @@ namespace Itemify.Core.PostgreSql
                 .TrimEnd(',')
                 .NewLine();
 
-            var affected = db.Execute(query.ToString(), values);
-            return affected;
+            using (var db = getDb())
+                return db.Execute(query.ToString(), values);
         }
 
 
@@ -378,37 +369,42 @@ namespace Itemify.Core.PostgreSql
                 .TrimEnd(',')
                 .NewLine();
 
-            if (pk == null)
+            using (var db = getDb())
             {
-                var affected = db.Execute(query.ToString(), values);
-
-                return new object[0];
-            }
-            else
-            {
-                var insertedIds = new List<object>();
-                query.WriteTabbedLine(1, $"RETURNING \"{pk.Name}\"");
-
-                using (var reader = db.Query(query.ToString(), values))
+                if (pk == null)
                 {
-                    Debug.Assert(reader.VisibleFieldCount == 1);
 
-                    while (reader.Read())
-                    {
-                        var id = reader.GetValue(0);
-                        insertedIds.Add(id);
+                    var affected = db.Execute(query.ToString(), values);
 
-                        Debug.Assert(id != null);
-                    }
+                    return new object[0];
                 }
+                else
+                {
+                    var insertedIds = new List<object>();
+                    query.WriteTabbedLine(1, $"RETURNING \"{pk.Name}\"");
 
-                return insertedIds;
+                    using (var reader = db.Query(query.ToString(), values))
+                    {
+                        Debug.Assert(reader.VisibleFieldCount == 1);
+
+                        while (reader.Read())
+                        {
+                            var id = reader.GetValue(0);
+                            insertedIds.Add(id);
+
+                            Debug.Assert(id != null);
+                        }
+                    }
+
+                    return insertedIds;
+                }
             }
         }
 
         public int Execute(string query, params object[] parameters)
         {
-            return db.Execute(query, parameters);
+            using (var db = getDb())
+                return db.Execute(query, parameters);
         }
 
         public IEnumerable<TEntity> Query<TEntity>(string query, params object[] parameters)
@@ -427,19 +423,14 @@ namespace Itemify.Core.PostgreSql
 
             var type = typeof(TEntity);
 
+            using (var db = getDb())
             using (var reader = db.Query(query, parameters))
             {
                 var allColumns = ReflectionUtil.GetColumnSchemas(type);
                 var columns = GetColumns(reader)
                     .Select(name => GetColumnSchema<TEntity>(name, allColumns))
                     .ToArray();
-
-#if DEBUG
-                var valueSets = GetValueSets(reader).ToArray();
-                log.Describe(valueSets.Length + " item(s) received.");
-#else
                 var valueSets = GetValueSets(reader);
-#endif
 
                 foreach (var valueSet in valueSets)
                 {
@@ -456,6 +447,11 @@ namespace Itemify.Core.PostgreSql
                     yield return result;
                 }
             }
+        }
+
+        private PostgreSqlDatabase getDb()
+        {
+            return new PostgreSqlDatabase(connectionPool, log);
         }
 
         private static PostgreSqlColumnSchema GetColumnSchema<T>(string name, IReadOnlyList<PostgreSqlColumnSchema> allColumns)
@@ -479,6 +475,7 @@ namespace Itemify.Core.PostgreSql
 
             Debug.Assert(query.Contains("@" + (parameters.Length - 1)), "Query should contain exactly " + parameters.Length + " placeholders like @0, @1, ...");
 
+            using (var db = getDb())
             using (var reader = db.Query(query, parameters))
             {
                 foreach (var set in GetValueSets(reader))
@@ -514,11 +511,13 @@ namespace Itemify.Core.PostgreSql
 
         public void Dispose()
         {
-            if (context != null)
-            {
-                context.Dispose();
-                context = null;
-            }
+            log?.Dispose();
+        }
+
+        public void TryDropTable(string table)
+        {
+            if (TableExists(table))
+                DropTable(table);
         }
     }
 }

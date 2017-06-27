@@ -27,7 +27,13 @@ namespace Itemify
             });
             this.log = new RegionBasedLogWriter(logData, nameof(BuildingStructureTest));
 
-            var settings = new ItemifySettings("Server=127.0.0.1;Port=5432;Database=itemic;User Id=postgres;Password=abc;");
+            var settings = new ItemifySettings(host: "134.168.62.120",
+                port: 5432,
+                username: "postgres_dawid",
+                password: "LustitiaDev",
+                database: "postgres_dawid",
+                connectionPoolSize: 50,
+                timeout: TimeSpan.FromSeconds(5));
 
             this.itemify = new Itemify(settings, this.log);
         }
