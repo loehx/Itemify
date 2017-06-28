@@ -228,6 +228,8 @@ namespace Itemify.Core.PostgreSql
                         .WriteIf(i < valuePlaceholders.Count - 1, ",")
                         .NewLine();
                 }
+                query.WriteTabbedLine(2, "WHERE \"" + pk.Name + "\" = @" + pos++);
+                values.Add(pk.GetValue(entity));
             }
 
             if (!insertPrimaryKey && pk != null)
@@ -252,6 +254,7 @@ namespace Itemify.Core.PostgreSql
             var query = new StringBuilder(columns.Count * 32);
             var values = new List<object>(columns.Count);
             var pos = 0;
+            PostgreSqlColumnSchema pk = null;
 
             query.Write($"UPDATE ")
                 .WriteLine(ResolveTableName(tableName))
@@ -264,7 +267,10 @@ namespace Itemify.Core.PostgreSql
                 var defaultValue = value?.GetType().GetDefault();
 
                 if (column.PrimaryKey)
+                {
+                    pk = column;
                     continue;
+                }
 
                 if (column.Nullable && (merge && value == defaultValue))
                     continue;
@@ -278,7 +284,15 @@ namespace Itemify.Core.PostgreSql
             }
 
             query.TrimEndLineBreaks()
-                .TrimEnd(',')
+                .TrimEnd(',');
+            
+            if (pk != null)
+            {
+                query.WriteTabbedLine(2, "WHERE \"" + pk.Name + "\" = @" + pos++);
+                values.Add(pk.GetValue(entity));
+            }
+            
+            query.TrimEndLineBreaks()
                 .NewLine();
 
             using (var db = getDb())

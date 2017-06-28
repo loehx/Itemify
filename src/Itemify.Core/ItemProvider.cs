@@ -16,8 +16,8 @@ namespace Itemify.Core
         private readonly EntityProvider provider;
         private readonly ILogWriter log;
 
-        public const string CHILDREN_MAPPING_TABLE_NAME = "ChildrenMapping";
-        public const string RELATIONS_MAPPING_TABLE_NAME = "RelationsMapping";
+        public const string CHILDREN_MAPPING_TABLE_NAME = "childrenMapping";
+        public const string RELATIONS_MAPPING_TABLE_NAME = "relationsMapping";
 
         public IItemReference Root => DefaultItem.Root;
 

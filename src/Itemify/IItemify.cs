@@ -15,6 +15,7 @@ namespace Itemify
 
         IEnumerable<Item> GetChildrenOfItemByReference(IItemReference r, params string[] types);
         Guid Save(Item item);
+        Guid SaveNew(Item item);
         void SaveExisting(Item item);
         void SetRelations(IItemReference source, params IItemReference[] targets);
         void AddRelations(IItemReference source, params IItemReference[] targets);
