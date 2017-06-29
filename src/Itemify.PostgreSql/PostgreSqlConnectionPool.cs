@@ -22,7 +22,7 @@ namespace Itemify.Core.PostgreSql
 
         private static int connectionPoolCount = 0;
 
-        public PostgreSqlConnectionPool(string connectionString, int maxCount, int timeoutMilliseconds)
+        internal PostgreSqlConnectionPool(string connectionString, int maxCount, int timeoutMilliseconds)
         {
             _connectionString = connectionString;
             _maxCount = maxCount;
@@ -33,7 +33,7 @@ namespace Itemify.Core.PostgreSql
 
             write_log($"New pool: {connectionString}");
             write_log($"    size: {maxCount}");
-            write_log($"    timeout: {timeoutMilliseconds} ms");
+            write_log($" timeout: {timeoutMilliseconds} ms");
         }
 
         public int AvailableCount => _available.Count;

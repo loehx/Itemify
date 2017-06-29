@@ -11,11 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Itemify.Shared\Itemify.Shared.csproj" />
     <ProjectReference Include="..\..\src\Itemify\Itemify.csproj" />
-    <ProjectReference Include="..\src\Itemify.Core\Itemify.Core.csproj" />
-    <ProjectReference Include="..\src\Itemify.PostgreSql\Itemify.PostgreSql.csproj" />
-    <ProjectReference Include="..\src\Itemify.Shared\Itemify.Shared.csproj" />
-    <ProjectReference Include="..\src\Itemify\Itemify.csproj" />
   </ItemGroup>
 
   <ItemGroup>
