@@ -22,6 +22,11 @@ namespace Itemify
             inner = new DefaultItem(Guid.Empty, type);
         }
 
+        public Item(Guid guid, string type)
+        {
+            inner = new DefaultItem(guid, type);
+        }
+
         internal Item(DefaultItem inner)
         {
             if (inner == null)

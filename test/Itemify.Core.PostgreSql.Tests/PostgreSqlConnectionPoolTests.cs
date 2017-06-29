@@ -28,7 +28,7 @@ namespace Itemify.Core.PostgreSql.Spec
         [Fact]
         public void ConnectionPool_ParallelQuery()
         {
-            var connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 2, 1000);
+            var connectionPool = PostgreSqlConnectionPoolFactory.GetPoolByConnectionString(CONNECTION_STRING, 2, 1000);
             var providerA = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
             var providerB = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
 
@@ -45,7 +45,7 @@ namespace Itemify.Core.PostgreSql.Spec
         [Fact]
         public void ConnectionPool_Disposing()
         {
-            var connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 2, 5000);
+            var connectionPool = PostgreSqlConnectionPoolFactory.GetPoolByConnectionString(CONNECTION_STRING, 2, 5000);
             var providerA = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
             var providerB = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
 
@@ -59,7 +59,7 @@ namespace Itemify.Core.PostgreSql.Spec
         [Fact]
         public void ConnectionPool_NoTimeout()
         {
-            var connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 2, 1000);
+            var connectionPool = PostgreSqlConnectionPoolFactory.GetPoolByConnectionString(CONNECTION_STRING, 2, 1000);
             var providerA = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
             var providerB = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
 

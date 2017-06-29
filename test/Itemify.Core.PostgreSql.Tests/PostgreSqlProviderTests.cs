@@ -13,7 +13,7 @@ namespace Itemify.Core.PostgreSql.Spec
     {
         private const string SCHEMA = "tests";
         private const string CONNECTION_STRING = "Server=127.0.0.1;Port=5432;Database=itemic;User Id=postgres;Password=abc;";
-        private PostgreSqlConnectionPool connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 60, 5000);
+        private PostgreSqlConnectionPool connectionPool = PostgreSqlConnectionPoolFactory.GetPoolByConnectionString(CONNECTION_STRING, 60, 5000);
 
         private PostgreSqlProvider provider;
 
