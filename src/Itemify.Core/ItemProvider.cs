@@ -84,10 +84,11 @@ namespace Itemify.Core
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
 
-            var guid = provider.Insert(item.Type, item.GetEntity());
-            var relations = new KeyValuePair<Guid, string>(item.Guid, parseTypeName(item.Type));
+            var typeName = item.Type;
+            var guid = provider.Insert(typeName, item.GetEntity());
+            var relations = new KeyValuePair<Guid, string>(item.Guid, typeName);
 
-            provider.InsertItemRelations(parseTypeName(item.Parent.Type), item.Parent.Guid, new[] {relations}, CHILDREN_MAPPING_TABLE_NAME, false);
+            provider.InsertItemRelations(item.Parent.Type, item.Parent.Guid, new[] {relations}, CHILDREN_MAPPING_TABLE_NAME, false);
 
             return guid;
         }
@@ -117,7 +118,7 @@ namespace Itemify.Core
             if (resolving == null) throw new ArgumentNullException(nameof(resolving));
             if (r.Equals(Root)) throw new ArgumentException("Cannot get root item: " + r, "r");
 
-            var entity = provider.QuerySingleItem(parseTypeName(r.Type), r.Guid);
+            var entity = provider.QuerySingleItem(r.Type, r.Guid);
             if (entity == null)
                 return null;
 
@@ -236,6 +237,11 @@ namespace Itemify.Core
                 item.Parent = GetItemByReference(item.Parent);
             }
 
+            if (entity.ParentGuid.Equals(Root.Guid))
+            {
+                item.Parent = Root;
+            }
+
             return item;
         }
 
@@ -247,10 +253,11 @@ namespace Itemify.Core
 
         private IEnumerable<DefaultItem> getChildrenOfItem(IItemReference itemRef, IEnumerable<string> types)
         {
+            types = types.Select(k => k.ToCamelCase());
 
             foreach (var type in types)
             {
-                var typeName = parseTypeName(type);
+                var typeName = type;
                 var children = provider.QueryItemsByRelation(itemRef.Type, itemRef.Guid, typeName,
                         CHILDREN_MAPPING_TABLE_NAME, false)
                     .Select(child => new DefaultItem(child))
@@ -267,10 +274,11 @@ namespace Itemify.Core
 
         private IEnumerable<DefaultItem> getRelationsOfItem(IItemReference itemRef, IEnumerable<string> types)
         {
+            types = types.Select(k => k.ToCamelCase());
 
             foreach (var type in types)
             {
-                var typeName = parseTypeName(type);
+                var typeName = type;
                 var relatedItems = provider.QueryItemsByRelation(itemRef.Type, itemRef.Guid, typeName,
                         RELATIONS_MAPPING_TABLE_NAME, true)
                     .Select(child => new DefaultItem(child))
@@ -283,12 +291,6 @@ namespace Itemify.Core
 
                 log.Describe($"Resolved {relatedItems.Length} related item(s) of type: {type}.");
             }
-        }
-
-
-        private static string parseTypeName(string name)
-        {
-            return name.ToCamelCase();
         }
 
         public void RemoveItemByReference(IItemReference r)

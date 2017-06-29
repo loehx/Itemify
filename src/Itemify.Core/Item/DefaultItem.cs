@@ -8,7 +8,7 @@ namespace Itemify.Core.Item
     public class DefaultItem : ItemBase, IItemReference
     {
         private readonly IItemReference parent;
-        public static DefaultItem Root => new DefaultItem(Guid.Empty, DefaultTypes.Root, null);
+        public static IItemReference Root => new ItemReference(Guid.Empty, DefaultTypes.Root);
 
         public bool IsRoot => this.Guid == Guid.Empty && Type == DefaultTypes.Root;
         public bool HasUnknownType => Type == DefaultTypes.Unknown;

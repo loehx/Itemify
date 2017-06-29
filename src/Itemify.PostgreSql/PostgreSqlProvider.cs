@@ -140,7 +140,7 @@ namespace Itemify.Core.PostgreSql
             if (tableName.StartsWith($"\"{Schema}\"."))
                 return tableName;
 
-            return $"\"{Schema}\".\"{tableName}\"";
+            return $"\"{Schema}\".\"{tableName.ToCamelCase()}\"";
         }
 
         public void Insert(string tableName, IAnonymousEntity entity, bool merge = true)
@@ -151,7 +151,7 @@ namespace Itemify.Core.PostgreSql
         public Guid Insert(string tableName, IGloballyUniqueEntity entity, bool upsert = false, bool merge = true)
         {
             if (entity.Guid == Guid.Empty)
-                entity.Guid = Guid.NewGuid();
+                throw new Exception("Cannot insert entity that with guid.");
 
             var guid = Insert(tableName, entity, true, upsert, merge);
             if (guid != null)
