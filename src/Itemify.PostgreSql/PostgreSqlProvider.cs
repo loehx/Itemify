@@ -228,8 +228,6 @@ namespace Itemify.Core.PostgreSql
                         .WriteIf(i < valuePlaceholders.Count - 1, ",")
                         .NewLine();
                 }
-                query.WriteTabbedLine(2, "WHERE \"" + pk.Name + "\" = @" + pos++);
-                values.Add(pk.GetValue(entity));
             }
 
             if (!insertPrimaryKey && pk != null)
