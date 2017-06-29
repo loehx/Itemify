@@ -13,7 +13,7 @@ namespace Itemify
         private string password;
         private string database;
         private int connectionPoolSize;
-        private TimeSpan timeout;
+        private int timeout;
 
         public ItemifySettings()
         {
@@ -23,7 +23,7 @@ namespace Itemify
             };
         }
         
-        public ItemifySettings(string host, int port, string username, string password, string database, int connectionPoolSize, TimeSpan timeout)
+        public ItemifySettings(string host, int port, string username, string password, string database, int connectionPoolSize, int timeout)
         {
             this.host = host;
             this.port = port;
@@ -35,7 +35,7 @@ namespace Itemify
 
             providerSettings = new ItemProviderSettings
             {
-                Timeout = (int)timeout.TotalMilliseconds,
+                Timeout = timeout,
                 Schema = "default",
                 MaxConnections = connectionPoolSize,
                 PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize)
@@ -121,7 +121,7 @@ namespace Itemify
             }
         }
 
-        public TimeSpan Timeout
+        public int Timeout
         {
             get
             {
@@ -130,7 +130,7 @@ namespace Itemify
             set
             {
                 timeout = value;
-                providerSettings.Timeout = (int) timeout.TotalMilliseconds;
+                providerSettings.Timeout = timeout;
             }
         }
 
