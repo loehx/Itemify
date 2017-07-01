@@ -114,7 +114,7 @@ namespace Itemify.Core.PostgreSql
         [Conditional("DEBUG")]
         private void write_log(string message)
         {
-            Debug.WriteLine($"[PostgreSqlConnectionPool#{poolId}] " + message);
+            Debug.WriteLine($"[PostgreSqlConnectionPool #{poolId}] " + message);
         }
     }
 }

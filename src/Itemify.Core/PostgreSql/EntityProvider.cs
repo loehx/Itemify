@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Itemify.Core.Exceptions;
 using Itemify.Core.PostgreSql.Entities;
+using Itemify.Core.PostgreSql.Util;
 using Itemify.Logging;
 using Itemify.Shared.Utils;
 
@@ -14,12 +18,15 @@ namespace Itemify.Core.PostgreSql
     {
         private PostgreSqlProvider postgreSql;
         private readonly ILogWriter log;
-        private readonly SortedSet<string> tables = new SortedSet<string>();
+        private readonly Hashtable tables;
+        private object syncRoot;
 
         public EntityProvider(PostgreSqlProvider postgreSql, ILogWriter log)
         {
             this.postgreSql = postgreSql;
             this.log = log;
+            this.tables = new Hashtable();
+            this.syncRoot = new object();
         }
 
         public Guid Upsert(string tableName, ItemEntity entity)
@@ -49,7 +56,7 @@ namespace Itemify.Core.PostgreSql
         public void InsertItemRelations(string tableName, Guid guid,
             IEnumerable<KeyValuePair<Guid, string>> targetItems, string mappingTableName, bool overwrite)
         {
-            tableName = resolveTable<ItemEntity>(tableName);
+            tableName = resolveTable<ItemEntity>(tableName, guid == Guid.Empty);
             mappingTableName = resolveTable<ItemRelationEntity>(mappingTableName);
 
             if (overwrite)
@@ -60,7 +67,7 @@ namespace Itemify.Core.PostgreSql
                 Guid = guid,
                 Table = tableName,
                 TargetGuid = k.Key,
-                TargetTable = resolveTable<ItemEntity>(k.Value)
+                TargetTable = resolveTable<ItemEntity>(k.Value, k.Key == Guid.Empty)
             });
 
             postgreSql.BulkInsert(mappingTableName, relations);
@@ -68,10 +75,10 @@ namespace Itemify.Core.PostgreSql
 
         public void DeleteItemRelations(string tableName, Guid guid, string mappingTableName, IEnumerable<string> targetTables)
         {
-            tableName = resolveTable<ItemEntity>(tableName);
+            tableName = resolveTable<ItemEntity>(tableName, guid == Guid.Empty);
             mappingTableName = resolveTable<ItemRelationEntity>(mappingTableName);
             var parameters = new object[] { guid, tableName }
-                .Concat(targetTables.Select(resolveTable<ItemEntity>))
+                .Concat(targetTables.Select(k => resolveTable<ItemEntity>(k)))
                 .ToArray();
 
             postgreSql.Execute("DELETE FROM " + mappingTableName +
@@ -87,7 +94,7 @@ namespace Itemify.Core.PostgreSql
 
         public IEnumerable<ItemEntity> QueryItemsByRelation(string tableName, Guid guid, string targetTableName, string mappingTableName, bool bidirectional)
         {
-            tableName = resolveTable<ItemEntity>(tableName);
+            tableName = resolveTable<ItemEntity>(tableName, guid == Guid.Empty);
             targetTableName = resolveTable<ItemEntity>(targetTableName);
             mappingTableName = resolveTable<ItemRelationEntity>(mappingTableName);
 
@@ -110,20 +117,26 @@ namespace Itemify.Core.PostgreSql
 
 
 
-        private string resolveTable<TSchema>(string tableName)
+        private string resolveTable<TSchema>(string tableName, bool isRoot = false)
            where TSchema : IEntityBase
         {
             tableName = postgreSql.ResolveTableName(tableName);
 
-            if (!tables.Contains(tableName))
+            if (isRoot) return tableName;
+
+            lock (syncRoot)
             {
-                tables.Add(tableName);
+                var table = tables[tableName];
+                if (table != null) return tableName; // Table already resolved
+                tables[tableName] = true;
 
                 if (!postgreSql.TableExists(tableName))
                 {
+                    Debug.Assert(!tableName.Contains("\"root\""));
                     log.Describe($"Create missing table: {tableName}");
                     postgreSql.CreateTable<TSchema>(tableName);
                 }
+
             }
 
             return tableName;
@@ -146,6 +159,29 @@ namespace Itemify.Core.PostgreSql
         {
             tableName = postgreSql.ResolveTableName(tableName);
             return postgreSql.Query<ItemEntity>($"SELECT * FROM {tableName} WHERE \"ValueDate\" >= @0 AND \"ValueDate\" <= @1", from, to);
+        }
+
+        public void Reset()
+        {
+            postgreSql.DropSchema();
+            postgreSql.EnsureSchemaExists();
+        }
+
+        public IEnumerable<ItemEntity> QueryItemsByTypes(IEnumerable<string> tableNames)
+        {
+            var sql = new StringBuilder();
+
+            foreach (var tableName in tableNames)
+            {
+                if (tableName.IsEmpty()) throw new ArgumentException("List of table names contains an empty string.", nameof(tableNames));
+
+                sql.AppendLine($"SELECT * FROM {postgreSql.ResolveTableName(tableName)}")
+                    .AppendLine("UNION");
+            }
+
+            sql.Length -= "UNION".Length + 2;
+
+            return postgreSql.Query<ItemEntity>(sql.ToString());
         }
     }
 }

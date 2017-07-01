@@ -24,7 +24,7 @@ namespace Itemify
                 Console.WriteLine(l);
             });
             this.log = new RegionBasedLogWriter(logData, nameof(BuildingStructureTest));
-
+            
             var settings = new ItemifySettings(host: "134.168.62.120",
                 port: 5432,
                 username: "postgres_dawid",

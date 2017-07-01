@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Itemify.Core.Item
+namespace Itemify
 {
     public interface IItemReference : IComparable
     {

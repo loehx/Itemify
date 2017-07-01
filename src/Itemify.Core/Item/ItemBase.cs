@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using Itemify.Core.ItemAccess;
 using Itemify.Core.Keywording;
 using Itemify.Core.PostgreSql.Entities;
 using Itemify.Shared.Utils;
@@ -9,54 +8,54 @@ namespace Itemify.Core.Item
 {
     public class 
         
-        ItemBase
+    ItemBase : DefaultItemReference
     {
         private readonly ItemEntity entity;
-        private IItemReference parent;
-        private readonly bool isNew;
+        private DefaultItemReference parent;
 
-        protected ItemCollection<IItemReference> related { get; }
-        protected ItemCollection<IItemReference> children { get; }
+        protected ItemCollection<ItemBase> related { get; }
+        protected ItemCollection<ItemBase> children { get; }
 
         public int Revision => entity.Revision;
         public bool Debug => entity.Debug;
         public bool HasBody => !string.IsNullOrEmpty(entity.ValueJson);
         public bool IsParentResolved => Parent is ItemBase;
-        public IItemReference Parent {
+        public DefaultItemReference Parent {
             get { return parent; }
             set { parent = value; } }
         public DateTime Created => entity.Created;
         public DateTime Modified => entity.Modified;
 
-        public bool IsNew => isNew;
+        public bool IsNew { get; }
 
-        internal ItemBase(ItemEntity entity, IItemReference parent, bool isNew)
+        internal ItemBase(ItemEntity entity, DefaultItemReference parent, bool isNew) 
+            : base(entity.Guid, entity.Type)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
 
             this.entity = entity;
             this.parent = parent;
-            this.isNew = isNew;
-            this.related = new ItemCollection<IItemReference>();
-            this.children = new ItemCollection<IItemReference>();
+            this.IsNew = isNew;
+            this.related = new ItemCollection<ItemBase>();
+            this.children = new ItemCollection<ItemBase>();
         }
 
-        public Guid Guid
+        public new Guid Guid
         {
-            get { return entity.Guid; }
-            set { entity.Guid = value; }
+            get => entity.Guid;
+            set => entity.Guid = value;
         }
 
-        public string Type
+        public new string Type
         {
-            get { return entity.Type; }
-            set { entity.Type = value; }
+            get => entity.Type;
+            set => entity.Type = value;
         }
 
         public string Name
         {
-            get { return string.IsNullOrEmpty(entity.Name) ? "[" + Type + "]" : entity.Name; }
-            set { entity.Name = value ?? ""; }
+            get => string.IsNullOrEmpty(entity.Name) ? "[" + Type + "]" : entity.Name;
+            set => entity.Name = value ?? "";
         }
 
         public double? ValueNumber
@@ -148,7 +147,8 @@ namespace Itemify.Core.Item
 
         public override string ToString()
         {
-            return $"{Name} <{Type}> ({(IsNew ? "NEW" : "REV:" + Revision)})";
+            var creation = Created == DateTime.MinValue ? "NEW" : (DateTime.Now - Created).ToReadableString(1, true) + " ago";
+            return $"{Name} <{Type}> ({creation})";
         }
 
         public override bool Equals(object obj)
@@ -170,7 +170,7 @@ namespace Itemify.Core.Item
             return Guid.GetHashCode() ^ Type.GetHashCode();
         }
 
-        public int CompareTo(object obj)
+        public new int CompareTo(object obj)
         {
             var item = obj as ItemBase;
             if (item != null)
@@ -181,11 +181,11 @@ namespace Itemify.Core.Item
                 }
                 else
                 {
-                    return Created.CompareTo(item.Created);
+                    return item.Created.CompareTo(Created);
                 }
             }
 
-            if (obj is ItemReference)
+            if (obj is DefaultItemReference)
                 return -1;
 
             return 0;

@@ -7,7 +7,7 @@ using System.Linq;
 namespace Itemify.Core.Item
 {
     public class ItemCollection<T> : IList<T>, IReadOnlyCollection<T>
-        where T: IItemReference
+        where T: ItemBase
     {
         private List<T> inner { get; }
         private bool isReadOnly;

@@ -105,6 +105,11 @@ namespace Itemify.Core.PostgreSql
                 return true.Equals(db.QuerySingleValue(sql.ToString()));
         }
 
+        public ICollection<string> GetTableNamesBySchema()
+        {
+            return GetTableNamesBySchema(this.schema);
+        }
+
         public ICollection<string> GetTableNamesBySchema(string schema)
         {
             var result = new List<string>();
@@ -128,11 +133,15 @@ namespace Itemify.Core.PostgreSql
 
         public bool DropTable(string tableName)
         {
-            tableName = ResolveTableName(tableName);
-
             var sql = "DROP TABLE " + ResolveTableName(tableName);
             using (var db = getDb())
                 return db.Execute(sql) > 0;
+        }
+
+        public void DropSchema()
+        {
+            using (var db = getDb())
+                db.Execute($"DROP SCHEMA \"{Schema}\" CASCADE");
         }
 
         public string ResolveTableName(string tableName)

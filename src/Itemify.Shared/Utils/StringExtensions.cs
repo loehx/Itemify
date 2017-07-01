@@ -162,7 +162,23 @@ namespace Itemify.Shared.Utils
 
         public static string ToCamelCase(this string text)
         {
-            return text.Camelize();
+            return text.Camelize().RemoveCharacters(c => !char.IsLetterOrDigit(c));
+        }
+
+        public static string RemoveCharacters(this string source, Func<char, bool> removeFunc)
+        {
+            if (source == null) return source;
+
+            var sb = new StringBuilder(source.Length);
+
+            for (int i = 0; i < source.Length; i++)
+            {
+                var c = source[i];
+                if (!removeFunc(c))
+                    sb.Append(c);
+            }
+
+            return sb.ToString();
         }
 
 

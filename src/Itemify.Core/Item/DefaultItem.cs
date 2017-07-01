@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using Itemify.Core.ItemAccess;
+using System.Linq;
 using Itemify.Core.PostgreSql.Entities;
 
 namespace Itemify.Core.Item
 {
-    public class DefaultItem : ItemBase, IItemReference
+    public class DefaultItem : ItemBase
     {
-        private readonly IItemReference parent;
-        public static IItemReference Root => new ItemReference(Guid.Empty, DefaultTypes.Root);
+        public static DefaultItemReference Root => new DefaultItemReference(Guid.Empty, DefaultTypes.Root);
 
         public bool IsRoot => this.Guid == Guid.Empty && Type == DefaultTypes.Root;
         public bool HasUnknownType => Type == DefaultTypes.Unknown;
 
-        public IReadOnlyCollection<IItemReference> Children => children;
-        public IReadOnlyCollection<IItemReference> Related => related;
+        public IReadOnlyCollection<DefaultItem> Children => children.Cast<DefaultItem>().ToArray();
+        public IReadOnlyCollection<DefaultItem> Related => related.Cast<DefaultItem>().ToArray();
 
 
         public DefaultItem(string type)
@@ -49,7 +48,7 @@ namespace Itemify.Core.Item
             related.SetReadOnly(true);
         }
 
-        public DefaultItem(Guid newGuid, string type, IItemReference parent) 
+        public DefaultItem(Guid newGuid, string type, DefaultItemReference parent) 
             : base(new ItemEntity() { Guid = newGuid, Type = type }, parent, true)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -60,20 +59,20 @@ namespace Itemify.Core.Item
         }
 
         public DefaultItem(ItemEntity entity)
-            : base(entity, new ItemReference(entity.ParentGuid, entity.ParentType), false)
+            : base(entity, new DefaultItemReference(entity.ParentGuid, entity.ParentType), false)
         {
             children.SetReadOnly(true);
             related.SetReadOnly(true);
         }
 
-        internal void AddChildren(IEnumerable<IItemReference> refs)
+        internal void AddChildren(IEnumerable<ItemBase> refs)
         {
             children.SetReadOnly(false);
             children.AddRange(refs);
             children.SetReadOnly(true);
         }
 
-        internal void AddRelated(IEnumerable<IItemReference> refs)
+        internal void AddRelated(IEnumerable<ItemBase> refs)
         {
             related.SetReadOnly(false);
             related.AddRange(refs);

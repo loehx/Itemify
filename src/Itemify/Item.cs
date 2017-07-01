@@ -5,10 +5,11 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Itemify.Core.Item;
 using Itemify.Shared.Utils;
+using Itemify.Util;
 
 namespace Itemify
 {
-    public class Item
+    public class Item : IItemReference
     {
         private DefaultItem inner;
 
@@ -36,87 +37,63 @@ namespace Itemify
         }
 
 
-        public int Revision
-        {
-            get { return inner.Revision;  }
-        }
-
-        public bool Debug
-        {
-            get { return inner.Debug; }
-        }
-
-        public bool HasBody
-        {
-            get { return inner.HasBody; }
-        }
-
-        public bool IsParentResolved
-        {
-            get { return inner.IsParentResolved; }
-        }
+        public int Revision => inner.Revision;
+        public bool Debug => inner.Debug;
+        public bool HasBody => inner.HasBody;
+        public bool IsParentResolved => inner.IsParentResolved;
 
         public IItemReference Parent
         {
-            get { return inner.Parent; }
-            set { inner.Parent = value; }
+            get => Item.Wrap(inner.Parent);
+            set => inner.Parent = value.GetInner();
         }
 
-        public DateTime Created
-        {
-            get { return inner.Created; }
-        }
-
-        public DateTime Modified
-        {
-            get { return inner.Modified; }
-        }
-
-        public bool IsNew
-        {
-            get { return inner.IsNew; }
-        }
+        public DateTime Created => inner.Created;
+        public DateTime Modified => inner.Modified;
+        public bool IsNew => inner.IsNew;
 
         public Guid Guid
         {
-            get { return inner.Guid; }
-            set { inner.Guid = value; }
+            get => inner.Guid;
+            set => inner.Guid = value;
         }
 
         public string Type
         {
-            get { return inner.Type; }
-            set { inner.Type = value; }
+            get => inner.Type;
+            set => inner.Type = value;
         }
+
+        public bool IsItem => true;
 
         public string Name
         {
-            get { return inner.Name; }
-            set { inner.Name = value; }
+            get => inner.Name;
+            set => inner.Name = value;
         }
 
         public double? ValueNumber
         {
-            get { return inner.ValueNumber; }
-            set { inner.ValueNumber = value; }
+            get => inner.ValueNumber;
+            set => inner.ValueNumber = value;
         }
 
         public DateTime? ValueDate
         {
-            get { return inner.ValueDate; }
-            set { inner.ValueDate = value; }
+            get => inner.ValueDate;
+            set => inner.ValueDate = value;
         }
 
         public string ValueString
         {
-            get { return inner.ValueString; }
-            set { inner.ValueString = value; }
+            get => inner.ValueString;
+            set => inner.ValueString = value;
         }
 
         public int Order
         {
-            get { return inner.Order; }
-            set { inner.Order = value; }
+            get => inner.Order;
+            set => inner.Order = value;
         }
 
         public T GetBody<T>()
@@ -149,21 +126,23 @@ namespace Itemify
             return inner.CompareTo(obj);
         }
 
-        public IReadOnlyCollection<Item> Children
-        {
-            get { return inner.Children.Cast<DefaultItem>().SelectList(Wrap); }
-        }
+        public IReadOnlyCollection<Item> Children => inner.Children.Cast<DefaultItem>().SelectList(Wrap);
 
-        public IReadOnlyCollection<Item> Related
-        {
-            get { return inner.Related.Cast<DefaultItem>().SelectList(Wrap); }
-        }
+        public IReadOnlyCollection<Item> Related => inner.Related.Cast<DefaultItem>().SelectList(Wrap);
 
         internal DefaultItem GetInner() => this.inner;
 
         internal static Item Wrap(DefaultItem item)
         {
             return item == null ? null : new Item(item);
+        }
+
+        internal static IItemReference Wrap(Core.Item.DefaultItemReference itemRef)
+        {
+            if (itemRef == null) return null;
+
+            var @ref = itemRef as DefaultItem;
+            return @ref != null ? (IItemReference) new Item(@ref) : new ItemReference(itemRef);
         }
 
         public override string ToString()

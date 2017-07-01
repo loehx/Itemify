@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using Itemify.Core.Exceptions;
 using Itemify.Core.Item;
-using Itemify.Core.ItemAccess;
 using Itemify.Core.PostgreSql;
 using Itemify.Logging;
 using Itemify.Shared.Utils;
@@ -422,7 +422,7 @@ namespace Itemify.Core.Spec
 
 
         #endregion
-        
+
         #region -----[   Remove item   ]------------------------------------------------------------------------------------------------------------------------------
 
         [Fact]
@@ -444,7 +444,7 @@ namespace Itemify.Core.Spec
             found = provider.GetItemByReference(item);
             Assert.Null(found);
         }
-      
+
         #endregion
 
         #region -----[   Query item   ]------------------------------------------------------------------------------------------------------------------------------
@@ -566,7 +566,7 @@ namespace Itemify.Core.Spec
             provider.SaveNew(itemB);
             provider.SaveNew(itemC);
 
-            provider.SetRelations(itemA, itemB, itemC);
+            provider.SetRelations(itemA, new DefaultItem[] { itemB, itemC });
 
             var actual = provider.GetItemByReference(itemA, ItemResolving.Default.RelatedItemsOfType("test", SensorType.Temperature));
 
@@ -595,7 +595,7 @@ namespace Itemify.Core.Spec
             provider.SaveNew(itemB);
             provider.SaveNew(itemC);
 
-            provider.SetRelations(itemA, itemB, itemC);
+            provider.SetRelations(itemA, new[] { itemB, itemC });
 
             var actual = provider.GetItemByReference(itemB, ItemResolving.Default.RelatedItemsOfType(DeviceType.Sensor));
 
@@ -613,7 +613,7 @@ namespace Itemify.Core.Spec
             provider.SaveNew(itemA);
             provider.SaveNew(itemB);
 
-            provider.SetRelations(itemA, itemB);
+            provider.SetRelations(itemA, new[] { itemB });
 
             var actual = provider.GetItemByReference(itemA, ItemResolving.Default.RelatedItemsOfType(SensorType.Temperature));
             Assert.Equal(1, actual.Related.Count);
@@ -828,7 +828,11 @@ namespace Itemify.Core.Spec
             var childC = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
 
             provider.SaveNew(item);
-            new[] { childA, childB, childC }.ForEach(k => provider.SaveNew(k));
+            new[] { childA, childB, childC }.ForEach(k =>
+            {
+                Thread.Sleep(1000);
+                provider.SaveNew(k);
+            });
 
             var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
 
@@ -854,7 +858,11 @@ namespace Itemify.Core.Spec
             var childB = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
             var childC = new DefaultItem(Guid.NewGuid(), SensorType.Temperature, item);
 
-            new[] { childA, childB, childC }.ForEach(k => provider.SaveNew(k));
+            new[] { childA, childB, childC }.ForEach(k =>
+            {
+                Thread.Sleep(10);
+                provider.SaveNew(k);
+            });
 
             var actual = provider.GetItemByReference(item, ItemResolving.Default.ChildrenOfType(SensorType.Temperature));
 

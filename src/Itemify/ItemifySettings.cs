@@ -38,95 +38,52 @@ namespace Itemify
                 Timeout = timeout,
                 Schema = "default",
                 MaxConnections = connectionPoolSize,
-                PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize)
             };
         }
 
         public string Host
         {
-            get
-            {
-                return host;
-            }
-            set
-            {
-                host = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
-            }
+            get => host;
+            set => host = value;
         }
 
         public int Port
         {
-            get
-            {
-                return port;
-            }
-            set
-            {
-                port = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
-            }
+            get => port;
+            set => port = value;
         }
 
         public string Username
         {
-            get
-            {
-                return username;
-            }
-            set
-            {
-                username = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
-            }
+            get => username;
+            set => username = value;
         }
 
         public string Password
         {
-            get
-            {
-                return password;
-            }
-            set
-            {
-                password = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
-            }
+            get => password;
+            set => password = value;
         }
 
         public string Database
         {
-            get
-            {
-                return database;
-            }
-            set
-            {
-                database = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
-            }
+            get => database;
+            set => database = value;
         }
 
         public int MaxConnections
         {
-            get
-            {
-                return connectionPoolSize;
-            }
+            get => connectionPoolSize;
             set
             {
                 connectionPoolSize = value;
                 providerSettings.MaxConnections = value;
-                providerSettings.PostgreSqlConnectionString = GetConnectionString(host, port, username, password, database, connectionPoolSize);
             }
         }
 
         public int Timeout
         {
-            get
-            {
-                return timeout;
-            }
+            get => timeout;
             set
             {
                 timeout = value;
@@ -136,17 +93,16 @@ namespace Itemify
 
         public string Schema
         {
-            get { return providerSettings.Schema; }
-            set { providerSettings.Schema = value; }
+            get => providerSettings.Schema;
+            set => providerSettings.Schema = value;
         }
 
-        public string PostgreSqlConnectionString => providerSettings.PostgreSqlConnectionString;
+        public string PostgreSqlConnectionString => $"Host={host};Port={port};Username={username};Password={password};Database={database};Pooling=true;Minimum Pool Size=1;Maximum Pool Size={connectionPoolSize}";
 
-        private static string GetConnectionString(string host, int port, string username, string password, string database, int connections)
+        internal ItemProviderSettings GetProviderSettings()
         {
-            return $"Host={host};Port={port};Username={username};Password={password};Database={database};Pooling=true;Minimum Pool Size=0;Maximum Pool Size={connections}";
+            providerSettings.PostgreSqlConnectionString = PostgreSqlConnectionString;
+            return providerSettings;
         }
-
-        internal ItemProviderSettings GetProviderSettings() => providerSettings;
     }
 }
