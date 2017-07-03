@@ -31,7 +31,7 @@ namespace Itemify
                 password: "LustitiaDev",
                 database: "postgres_dawid",
                 connectionPoolSize: 50,
-                timeout: (int) TimeSpan.FromSeconds(5).TotalMilliseconds);
+                timeout: TimeSpan.FromSeconds(5));
 
             this.itemify = new Itemify(settings, this.log);
         }
