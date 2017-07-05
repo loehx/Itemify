@@ -105,6 +105,11 @@ namespace Itemify.Core.PostgreSql
                 return true.Equals(db.QuerySingleValue(sql.ToString()));
         }
 
+        public ICollection<string> GetTableNamesBySchema()
+        {
+            return GetTableNamesBySchema(this.schema);
+        }
+
         public ICollection<string> GetTableNamesBySchema(string schema)
         {
             var result = new List<string>();
@@ -128,11 +133,15 @@ namespace Itemify.Core.PostgreSql
 
         public bool DropTable(string tableName)
         {
-            tableName = ResolveTableName(tableName);
-
             var sql = "DROP TABLE " + ResolveTableName(tableName);
             using (var db = getDb())
                 return db.Execute(sql) > 0;
+        }
+
+        public void DropSchema()
+        {
+            using (var db = getDb())
+                db.Execute($"DROP SCHEMA \"{Schema}\" CASCADE");
         }
 
         public string ResolveTableName(string tableName)
@@ -140,7 +149,7 @@ namespace Itemify.Core.PostgreSql
             if (tableName.StartsWith($"\"{Schema}\"."))
                 return tableName;
 
-            return $"\"{Schema}\".\"{tableName}\"";
+            return $"\"{Schema}\".\"{tableName.ToCamelCase()}\"";
         }
 
         public void Insert(string tableName, IAnonymousEntity entity, bool merge = true)
@@ -151,7 +160,7 @@ namespace Itemify.Core.PostgreSql
         public Guid Insert(string tableName, IGloballyUniqueEntity entity, bool upsert = false, bool merge = true)
         {
             if (entity.Guid == Guid.Empty)
-                entity.Guid = Guid.NewGuid();
+                throw new Exception("Cannot insert entity that with guid.");
 
             var guid = Insert(tableName, entity, true, upsert, merge);
             if (guid != null)

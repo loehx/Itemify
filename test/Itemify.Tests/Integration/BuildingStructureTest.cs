@@ -6,19 +6,17 @@ using System.Threading.Tasks;
 using Itemify.Core.Item;
 using Itemify.Logging;
 using Newtonsoft.Json;
-using NUnit.Framework.Internal;
-using NUnit.Framework;
+using Xunit;
+
 
 namespace Itemify
-{
-    [TestFixture]
+{ 
     public class BuildingStructureTest
     {
         private RegionBasedLogWriter log;
         private Itemify itemify;
 
-        [SetUp]
-        public void Setup()
+        public BuildingStructureTest()
         {
             var logData = new CustomLogData(l =>
             {
@@ -26,23 +24,23 @@ namespace Itemify
                 Console.WriteLine(l);
             });
             this.log = new RegionBasedLogWriter(logData, nameof(BuildingStructureTest));
-
+            
             var settings = new ItemifySettings(host: "134.168.62.120",
                 port: 5432,
                 username: "postgres_dawid",
                 password: "LustitiaDev",
                 database: "postgres_dawid",
                 connectionPoolSize: 50,
-                timeout: TimeSpan.FromSeconds(5));
+                timeout: TimeSpan.FromSeconds(5).Milliseconds);
 
             this.itemify = new Itemify(settings, this.log);
         }
 
 
-        [Test]
+        [Fact]
         public void Szenario_A()
         {
-            var locationItem = new Item(EntityTypes.Location);
+            var locationItem = new Item(Guid.NewGuid(), EntityTypes.Location);
             var location = new Coords(locationItem);
 
             location.Latitude = 54.342432;
@@ -50,18 +48,18 @@ namespace Itemify
             this.itemify.SaveNew(location.GetItem());
 
             var sameLocation = GetLocation(location.Guid);
-            Assert.AreEqual(location.Guid, sameLocation.Guid);
-            Assert.AreEqual(location.Latitude, sameLocation.Latitude);
-            Assert.AreEqual(location.Longitude, sameLocation.Longitude);
+            Assert.Equal(location.Guid, sameLocation.Guid);
+            Assert.Equal(location.Latitude, sameLocation.Latitude);
+            Assert.Equal(location.Longitude, sameLocation.Longitude);
 
             location.Latitude = 64.343241;
             location.Longitude = 32.342353;
             this.itemify.SaveExisting(location.GetItem());
 
             sameLocation = GetLocation(location.Guid);
-            Assert.AreEqual(location.Guid, sameLocation.Guid);
-            Assert.AreEqual(location.Latitude, sameLocation.Latitude);
-            Assert.AreEqual(location.Longitude, sameLocation.Longitude);
+            Assert.Equal(location.Guid, sameLocation.Guid);
+            Assert.Equal(location.Latitude, sameLocation.Latitude);
+            Assert.Equal(location.Longitude, sameLocation.Longitude);
         }
 
 

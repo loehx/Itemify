@@ -8,8 +8,6 @@ using Itemify.Shared.Utils;
 
 namespace Itemify.Logging
 {
-
-
     public class RegionBasedLogWriter : ILogWriter
     {
         private readonly ILogData log;

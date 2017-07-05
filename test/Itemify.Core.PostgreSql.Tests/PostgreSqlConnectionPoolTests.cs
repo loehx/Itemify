@@ -4,12 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Itemify.Core.PostgreSql.Exceptions;
 using Itemify.Logging;
-using NUnit.Framework;
-using Assert = NUnit.Framework.Assert;
+using Itemify.Shared.Utils;
+using Xunit;
 
 namespace Itemify.Core.PostgreSql.Spec
 {
-    [TestFixture]
     public class PostgreSqlConnectionPoolTests
     {
         private ILogWriter logwriter;
@@ -26,23 +25,27 @@ namespace Itemify.Core.PostgreSql.Spec
         }
 
 
-        [Test]
-        public void ConnectionPool_ConnectionMaxReached()
+        [Fact]
+        public void ConnectionPool_ParallelQuery()
         {
-            var connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 2, 1000);
+            var connectionPool = PostgreSqlConnectionPoolFactory.GetPoolByConnectionString(CONNECTION_STRING, 2, 1000);
             var providerA = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
             var providerB = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
 
-            Assert.Throws<TimeoutException>(() =>
+            10000.Times()
+                .AsParallel()
+                .WithDegreeOfParallelism(20)
+                .ForAll(k =>
             {
-                var providerC = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
+                providerA.Query("SELECT 1");
+                providerB.Query("SELECT 2");
             });
         }
 
-        [Test]
+        [Fact]
         public void ConnectionPool_Disposing()
         {
-            var connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 2, 5000);
+            var connectionPool = PostgreSqlConnectionPoolFactory.GetPoolByConnectionString(CONNECTION_STRING, 2, 5000);
             var providerA = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
             var providerB = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
 
@@ -53,31 +56,16 @@ namespace Itemify.Core.PostgreSql.Spec
             var providerD = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
         }
 
-        [Test]
+        [Fact]
         public void ConnectionPool_NoTimeout()
         {
-            var connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 2, 1000);
+            var connectionPool = PostgreSqlConnectionPoolFactory.GetPoolByConnectionString(CONNECTION_STRING, 2, 1000);
             var providerA = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
             var providerB = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
 
             Task.Delay(1000).ContinueWith(k => providerA.Dispose());
 
             var providerC = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
-        }
-
-        [Test]
-        public void ConnectionPool_Timeout()
-        {
-            var connectionPool = new PostgreSqlConnectionPool(CONNECTION_STRING, 2, 1000);
-            var providerA = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
-            var providerB = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
-
-            Task.Delay(1100).ContinueWith(k => providerA.Dispose());
-
-            Assert.Throws<TimeoutException>(() =>
-            {
-                var providerC = new PostgreSqlProvider(connectionPool, logwriter, SCHEMA);
-            });
         }
     }
 }

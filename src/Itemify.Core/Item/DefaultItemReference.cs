@@ -1,20 +1,19 @@
 ﻿using System;
-using Itemify.Core.Item;
 
-namespace Itemify.Core.ItemAccess
+namespace Itemify.Core.Item
 {
-    public class ItemReference : IItemReference
+    public class DefaultItemReference : IComparable
     {
         public Guid Guid { get; }
         public string Type { get; }
 
-        public ItemReference(Guid guid, string type)
+        public DefaultItemReference(Guid guid, string type)
         {
             this.Guid = guid;
             this.Type = type;
         }
 
-        protected bool Equals(IItemReference other)
+        protected bool Equals(DefaultItemReference other)
         {
             return Guid.Equals(other.Guid);
         }
@@ -23,8 +22,8 @@ namespace Itemify.Core.ItemAccess
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (!(obj is IItemReference)) return false;
-            return Equals((IItemReference)obj);
+            if (!(obj is DefaultItemReference)) return false;
+            return Equals((DefaultItemReference)obj);
         }
 
         public override int GetHashCode()
@@ -38,9 +37,12 @@ namespace Itemify.Core.ItemAccess
             if (item != null)
                 return -1;
 
-            var reference = obj as IItemReference;
+            var reference = obj as DefaultItemReference;
             if (reference != null)
             {
+                if (Type.Equals(reference.Type, StringComparison.OrdinalIgnoreCase))
+                    return reference.Guid.CompareTo(Guid);
+
                 return string.Compare(reference.Type, Type, StringComparison.Ordinal);
             }
 
