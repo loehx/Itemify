@@ -830,6 +830,7 @@ namespace Itemify.Core.Spec
             provider.SaveNew(item);
             new[] { childA, childB, childC }.ForEach(k =>
             {
+                Thread.Sleep(1000);
                 provider.SaveNew(k);
             });
 
