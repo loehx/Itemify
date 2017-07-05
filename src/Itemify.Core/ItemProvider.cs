@@ -27,7 +27,6 @@ namespace Itemify.Core
             var entityProviderLog = log.NewRegion(nameof(EntityProvider));
             var pool = PostgreSqlConnectionPoolFactory.GetPoolByConnectionString(settings.PostgreSqlConnectionString, settings.MaxConnections, settings.Timeout);
             var sqlProvider = new PostgreSqlProvider(pool, entityProviderLog.NewRegion("PostgreSQL"), settings.Schema);
-            sqlProvider.EnsureSchemaExists();
 
             this.provider = new EntityProvider(sqlProvider, entityProviderLog);
             this.log = log;
