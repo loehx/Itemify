@@ -148,8 +148,9 @@ namespace Itemify.Core.Item
 
         public override string ToString()
         {
+            var nameOrHash = entity.Name ?? this.Guid.ToString().Remove(1, 34);
             var creation = Created == DateTime.MinValue ? "NEW" : (DateTime.Now - Created).ToReadableString(1, true) + " ago";
-            return $"{Name} <{Type}> ({creation})";
+            return $"{nameOrHash} <{Type}> ({creation})";
         }
 
         public override bool Equals(object obj)

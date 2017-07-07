@@ -495,6 +495,50 @@ namespace Itemify.Core.Spec
         }
 
         [Fact]
+        public void GetItemsByName()
+        {
+            var item = new DefaultItem(Guid.NewGuid());
+
+            item.Type = DeviceType.Actor;
+            item.Name = "test string";
+
+            var id = provider.Save(item);
+            Assert.Equal(id, item.Guid);
+
+            var actual = provider.GetItemsByName("test string", item.Type, ItemResolving.Default).ToArray();
+            Assert.Equal(1, actual.Length);
+            Assert.Equal(id, actual[0].Guid);
+
+            actual = provider.GetItemsByName("test%", item.Type, ItemResolving.Default).ToArray();
+            Assert.Equal(1, actual.Length);
+            Assert.Equal(id, actual[0].Guid);
+
+            actual = provider.GetItemsByName("%st strin%", item.Type, ItemResolving.Default).ToArray();
+            Assert.Equal(1, actual.Length);
+            Assert.Equal(id, actual[0].Guid);
+
+            actual = provider.GetItemsByName("TEST st%", item.Type, ItemResolving.Default).ToArray();
+            Assert.Equal(1, actual.Length);
+            Assert.Equal(id, actual[0].Guid);
+
+            actual = provider.GetItemsByName("TEST%ng", item.Type, ItemResolving.Default).ToArray();
+            Assert.Equal(1, actual.Length);
+            Assert.Equal(id, actual[0].Guid);
+
+            actual = provider.GetItemsByName("test_string", item.Type, ItemResolving.Default).ToArray();
+            Assert.Equal(0, actual.Length);
+
+            actual = provider.GetItemsByName("TEST_str___", item.Type, ItemResolving.Default).ToArray();
+            Assert.Equal(0, actual.Length);
+
+            actual = provider.GetItemsByName("test1%", item.Type, ItemResolving.Default).ToArray();
+            Assert.Equal(0, actual.Length);
+
+            actual = provider.GetItemsByName("test", item.Type, ItemResolving.Default).ToArray();
+            Assert.Equal(0, actual.Length);
+        }
+
+        [Fact]
         public void GetItemsByNumberValue()
         {
             var item = new DefaultItem(Guid.NewGuid());

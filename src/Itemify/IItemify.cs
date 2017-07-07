@@ -30,13 +30,22 @@ namespace Itemify
         IEnumerable<Item> GetItemsByStringValue(string pattern, string type);
 
         /// <summary>
-        /// Returns all items, which string value matchs a specific pattern. (case-insensitive)
+        /// Returns all items, which string value matchss a specific pattern. (case-insensitive)
         /// </summary>
         /// <param name="pattern">Wildcard: %</param>
         /// <param name="type"></param>
         /// <param name="resolving"></param>
         /// <returns></returns>
         IEnumerable<Item> GetItemsByStringValue(string pattern, string type, ItemResolving resolving);
+
+        /// <summary>
+        /// Returns all items, which name matches a specific pattern. (case-insensitive)
+        /// </summary>
+        /// <param name="pattern">Wildcard: %</param>
+        /// <param name="type"></param>
+        /// <param name="resolving"></param>
+        /// <returns></returns>
+        IEnumerable<Item> GetItemsByName(string pattern, string type, ItemResolving resolving);
 
         /// <summary>
         /// Returns all items, which number value is within a specific range. (FROM &lt;= VALUE &lt;= TO)

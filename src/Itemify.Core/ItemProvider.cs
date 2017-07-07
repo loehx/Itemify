@@ -172,6 +172,17 @@ namespace Itemify.Core
             provider.DeleteItemRelations(itemA.Type, itemA.Guid, RELATIONS_MAPPING_TABLE_NAME, types);
         }
 
+        public IEnumerable<DefaultItem> GetItemsByName(string pattern, string type, ItemResolving resolving)
+        {
+            if (pattern == null) throw new ArgumentNullException(nameof(pattern));
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (resolving == null) throw new ArgumentNullException(nameof(resolving));
+
+            var items = provider.QueryItemsByName(type, pattern);
+
+            return resolveItems(items, resolving);
+        }
+
         public IEnumerable<DefaultItem> GetItemsByStringValue(string pattern, string type, ItemResolving resolving)
         {
             if (pattern == null) throw new ArgumentNullException(nameof(pattern));
@@ -272,6 +283,7 @@ namespace Itemify.Core
                 var children = provider.QueryItemsByRelation(itemRef.Type, itemRef.Guid, typeName,
                         CHILDREN_MAPPING_TABLE_NAME, false)
                     .Select(child => new DefaultItem(child))
+                    .OrderBy(k => k.Created)
                     .ToArray();
 
                 foreach (var child in children)
@@ -296,6 +308,7 @@ namespace Itemify.Core
                 var relatedItems = provider.QueryItemsByRelation(itemRef.Type, itemRef.Guid, typeName,
                         RELATIONS_MAPPING_TABLE_NAME, true)
                     .Select(child => new DefaultItem(child))
+                    .OrderBy(k => k.Created)
                     .ToArray();
 
                 foreach (var item in relatedItems)

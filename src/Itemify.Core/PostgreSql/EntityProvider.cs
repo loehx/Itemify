@@ -142,6 +142,13 @@ namespace Itemify.Core.PostgreSql
             return tableName;
         }
 
+        public IEnumerable<ItemEntity> QueryItemsByName(string tableName, string pattern)
+        {
+            tableName = postgreSql.ResolveTableName(tableName);
+            pattern = pattern.Replace("_", "\\_"); // Disable PostgreSQL's: Single character wildcard (_)
+            return postgreSql.Query<ItemEntity>($"SELECT * FROM {tableName} WHERE \"Name\" ILIKE @0", pattern);
+        }
+
         public IEnumerable<ItemEntity> QueryItemsByStringValue(string tableName, string pattern)
         {
             tableName = postgreSql.ResolveTableName(tableName);
