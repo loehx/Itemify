@@ -20,7 +20,8 @@ namespace Itemify
         void SetRelations(IItemReference source, params IItemReference[] targets);
         void AddRelations(IItemReference source, params IItemReference[] targets);
         void RemoveRelations(IItemReference source, params string[] types);
-
+        IEnumerable<Item> GetRelationsByReference(IItemReference source, ItemResolving resolving, params string[] types);
+            
         /// <summary>
         /// Returns all items, which string value matchs a specific pattern. (case-insensitive)
         /// </summary>
