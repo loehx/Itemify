@@ -82,6 +82,12 @@ namespace Itemify
             provider.RemoveRelations(source.GetInner(), types);
         }
 
+        public IEnumerable<Item> GetRelationsByReference(IItemReference source, ItemResolving resolving, params string[] types)
+        {
+            return provider.GetRelationsOfItemByReference(source.GetInner(), resolving, types)
+                .Select(k => new Item(k));
+        }
+
         public Item GetItemByReference(Guid guid, string type)
         {
             return Item.Wrap(provider.GetItemByReference(new DefaultItemReference(guid, type)));
@@ -190,7 +196,12 @@ namespace Itemify
 
         public IEnumerable<Item> GetChildrenOfItemByReference(IItemReference r, params string[] types)
         {
-            return provider.GetChildrenOfItemByReference(r.GetInner(), types).Select(Item.Wrap);
+            return GetChildrenOfItemByReference(r, ItemResolving.Default, types);
+        }
+
+        public IEnumerable<Item> GetChildrenOfItemByReference(IItemReference r, ItemResolving resolving, params string[] types)
+        {
+            return provider.GetChildrenOfItemByReference(r.GetInner(), resolving, types).Select(Item.Wrap);
         }
 
         public void RemoveItemByReference(IItemReference r)

@@ -486,7 +486,7 @@ namespace Itemify.Core.Spec
             Assert.Equal(provider.Root.Guid, foundB.Parent.Guid);
             Assert.Equal(provider.Root.Type, foundB.Parent.Type);
 
-            var rootChildren = provider.GetChildrenOfItemByReference(provider.Root, DeviceType.Actor).ToArray();
+            var rootChildren = provider.GetChildrenOfItemByReference(provider.Root, ItemResolving.Default, DeviceType.Actor).ToArray();
             Assert.Equal(b.Guid, rootChildren.First().Guid);
             Assert.Equal(b.Type, rootChildren.First().Type);
         }
@@ -875,7 +875,7 @@ namespace Itemify.Core.Spec
             Assert.Equal(child.Guid, actual.Children.First().Guid);
             Assert.Equal(child.Type, actual.Children.First().Type);
 
-            var rootChildren = provider.GetChildrenOfItemByReference(provider.Root, SensorType.Temperature, DeviceType.Sensor).ToArray();
+            var rootChildren = provider.GetChildrenOfItemByReference(provider.Root, ItemResolving.Default, SensorType.Temperature, DeviceType.Sensor).ToArray();
             Assert.Equal(1, rootChildren.Length);
             Assert.Equal(1, rootChildren.Count(k => k.Type.Equals(DeviceType.Sensor)));
         }
