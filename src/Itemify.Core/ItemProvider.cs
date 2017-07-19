@@ -51,7 +51,7 @@ namespace Itemify.Core
             var guid = provider.Upsert(actualItem.Type, actualItem.GetEntity());
             var relations = new KeyValuePair<Guid, string>(item.Guid, actualItem.Type);
 
-            provider.InsertItemRelations(item.Parent.Type, item.Parent.Guid, new[] { relations }, CHILDREN_MAPPING_TABLE_NAME, false);
+            provider.InsertEntityRelations(item.Parent.Type, item.Parent.Guid, new[] { relations }, CHILDREN_MAPPING_TABLE_NAME, false);
 
             // Should not save children implicitly
             // if (item.Children.Count > 0)
@@ -90,7 +90,7 @@ namespace Itemify.Core
             var guid = provider.Insert(typeName, item.GetEntity());
             var relations = new KeyValuePair<Guid, string>(item.Guid, typeName);
 
-            provider.InsertItemRelations(item.Parent.Type, item.Parent.Guid, new[] {relations}, CHILDREN_MAPPING_TABLE_NAME, false);
+            provider.InsertEntityRelations(item.Parent.Type, item.Parent.Guid, new[] {relations}, CHILDREN_MAPPING_TABLE_NAME, false);
 
             return guid;
         }
@@ -120,7 +120,7 @@ namespace Itemify.Core
             if (resolving == null) throw new ArgumentNullException(nameof(resolving));
             if (r.Equals(Root)) throw new ArgumentException("Cannot get root item: " + r, "r");
 
-            var entity = provider.QuerySingleItem(r.Type, r.Guid);
+            var entity = provider.QuerySingleEntity(r.Type, r.Guid);
             if (entity == null)
                 return null;
 
@@ -148,7 +148,7 @@ namespace Itemify.Core
             var relations = relatedItems
                 .Select(k => new KeyValuePair<Guid, string>(k.Guid, k.Type));
 
-            provider.InsertItemRelations(itemA.Type, itemA.Guid, relations, RELATIONS_MAPPING_TABLE_NAME, false);
+            provider.InsertEntityRelations(itemA.Type, itemA.Guid, relations, RELATIONS_MAPPING_TABLE_NAME, false);
         }
 
         public void SetRelations(DefaultItemReference itemA, IEnumerable<DefaultItemReference> relatedItems)
@@ -156,12 +156,12 @@ namespace Itemify.Core
             var relations = relatedItems
                 .Select(k => new KeyValuePair<Guid, string>(k.Guid, k.Type));
 
-            provider.InsertItemRelations(itemA.Type, itemA.Guid, relations, RELATIONS_MAPPING_TABLE_NAME, true);
+            provider.InsertEntityRelations(itemA.Type, itemA.Guid, relations, RELATIONS_MAPPING_TABLE_NAME, true);
         }
 
         public void RemoveRelations(DefaultItem itemA)
         {
-            provider.InsertItemRelations(itemA.Type, itemA.Guid, new KeyValuePair<Guid, string>[0], RELATIONS_MAPPING_TABLE_NAME, true);
+            provider.InsertEntityRelations(itemA.Type, itemA.Guid, new KeyValuePair<Guid, string>[0], RELATIONS_MAPPING_TABLE_NAME, true);
         }
         
         public void RemoveRelations(DefaultItemReference itemA, params string[] types)
@@ -169,7 +169,7 @@ namespace Itemify.Core
             if (itemA == null) throw new ArgumentNullException(nameof(itemA));
             if (types == null) throw new ArgumentNullException(nameof(types));
 
-            provider.DeleteItemRelations(itemA.Type, itemA.Guid, RELATIONS_MAPPING_TABLE_NAME, types);
+            provider.RemoveEntityRelations(itemA.Type, itemA.Guid, RELATIONS_MAPPING_TABLE_NAME, types);
         }
 
         public IEnumerable<DefaultItem> GetItemsByName(string pattern, string type, ItemResolving resolving)
@@ -178,7 +178,7 @@ namespace Itemify.Core
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (resolving == null) throw new ArgumentNullException(nameof(resolving));
 
-            var items = provider.QueryItemsByName(type, pattern);
+            var items = provider.QueryEntitiesByName(type, pattern);
 
             return resolveItems(items, resolving);
         }
@@ -189,7 +189,7 @@ namespace Itemify.Core
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (resolving == null) throw new ArgumentNullException(nameof(resolving));
 
-            var items = provider.QueryItemsByStringValue(type, pattern);
+            var items = provider.QueryEntitiesByStringValue(type, pattern);
 
             return resolveItems(items, resolving);
         }
@@ -199,7 +199,7 @@ namespace Itemify.Core
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (resolving == null) throw new ArgumentNullException(nameof(resolving));
 
-            var items = provider.QueryItemsByNumberValue(type, from, to);
+            var items = provider.QueryEntitiesByNumberValue(type, from, to);
 
             return resolveItems(items, resolving);
         }
@@ -209,7 +209,7 @@ namespace Itemify.Core
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (resolving == null) throw new ArgumentNullException(nameof(resolving));
 
-            var items = provider.QueryItemsByDateTimeValue(type, from, to);
+            var items = provider.QueryEntitiesByDateTimeValue(type, from, to);
 
             return resolveItems(items, resolving);
         }
@@ -220,7 +220,7 @@ namespace Itemify.Core
             var relations = item.Children
                 .Select(k => new KeyValuePair<Guid, string>(k.Guid, k.Type));
 
-            provider.InsertItemRelations(item.Type, item.Guid, relations, CHILDREN_MAPPING_TABLE_NAME, true);
+            provider.InsertEntityRelations(item.Type, item.Guid, relations, CHILDREN_MAPPING_TABLE_NAME, true);
 
             var children = item.Children.OfType<DefaultItem>();
             foreach (var child in children)
@@ -273,14 +273,12 @@ namespace Itemify.Core
         {
             if (itemRef == null) throw new ArgumentNullException(nameof(itemRef));
 
-            types = types.Select(k => k.ToCamelCase());
+            var ttypes = types.Select(k => k.ToCamelCase()).ToArray();
             var count = 0;
 
-            foreach (var type in types)
+            if (ttypes.Length == 0)
             {
-                count++;
-                var typeName = type;
-                var children = provider.QueryItemsByRelation(itemRef.Type, itemRef.Guid, typeName,
+                var children = provider.QueryEntityRelations(itemRef.Type, itemRef.Guid,
                         CHILDREN_MAPPING_TABLE_NAME, false)
                     .Select(child => new DefaultItem(child))
                     .OrderBy(k => k.Created)
@@ -291,11 +289,29 @@ namespace Itemify.Core
                     yield return child;
                 }
 
-                log.Describe($"Resolved {children.Length} children of type: {type}.");
+                log.Describe($"Resolved {children.Length} child(ren) of type: ANY for parent {itemRef}.");
             }
+            else
+            {
 
-            if (count == 0)
-                throw new ArgumentException("Please specifiy at least one item type.", nameof(types));
+                foreach (var type in ttypes)
+                {
+                    count++;
+                    var typeName = type;
+                    var children = provider.QueryEntityRelations(itemRef.Type, itemRef.Guid, typeName,
+                            CHILDREN_MAPPING_TABLE_NAME, false)
+                        .Select(child => new DefaultItem(child))
+                        .OrderBy(k => k.Created)
+                        .ToArray();
+
+                    foreach (var child in children)
+                    {
+                        yield return child;
+                    }
+
+                    log.Describe($"Resolved {children.Length} child(ren) of type: '{type}' for parent {itemRef}.");
+                }
+            }
         }
 
         private IEnumerable<DefaultItem> getRelationsOfItem(DefaultItemReference itemRef, IEnumerable<string> types)
@@ -305,7 +321,7 @@ namespace Itemify.Core
             foreach (var type in types)
             {
                 var typeName = type;
-                var relatedItems = provider.QueryItemsByRelation(itemRef.Type, itemRef.Guid, typeName,
+                var relatedItems = provider.QueryEntityRelations(itemRef.Type, itemRef.Guid, typeName,
                         RELATIONS_MAPPING_TABLE_NAME, true)
                     .Select(child => new DefaultItem(child))
                     .OrderBy(k => k.Created)
@@ -324,9 +340,19 @@ namespace Itemify.Core
         {
             if (r == null) throw new ArgumentNullException(nameof(r));
 
-            provider.Delete(r.Type, r.Guid);
+            provider.DeleteEntity(r.Type, r.Guid);
 
-            log.Describe($"Deleted item '{r}'.");
+            var children = GetChildrenOfItemByReference(r);
+            children.ForEach(k => provider.Update(k.Type, new ItemEntity() { Guid = k.Guid, ParentGuid = Root.Guid, ParentType = Root.Type}));
+
+            var childrenUpdated = provider.ReplaceEntityRelationSources(CHILDREN_MAPPING_TABLE_NAME, r.Guid, r.Type, Root.Guid, Root.Type, true); // Set parent of children to root item
+            var relationsRemoved = provider.RemoveEntityRelations(r.Type, r.Guid, RELATIONS_MAPPING_TABLE_NAME);
+
+            log.Describe($"Deleted item '{r}'.", new
+            {
+                childrenUpdated,
+                relationsRemoved
+            });
         }
 
         public void Reset()
@@ -339,7 +365,7 @@ namespace Itemify.Core
             if (resolving == null) throw new ArgumentNullException(nameof(resolving));
             if (types == null) throw new ArgumentNullException(nameof(types));
 
-            return provider.QueryItemsByTypes(types)
+            return provider.QueryEntitiesByTableNames(types)
                 .Select(e => resolveItem(e, resolving));
         }
     }

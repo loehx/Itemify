@@ -16,15 +16,15 @@ namespace Itemify.Core.Item
         protected ItemCollection<ItemBase> related { get; }
         protected ItemCollection<ItemBase> children { get; }
 
-        public int Revision => entity.Revision;
-        public bool Debug => entity.Debug;
+        public int Revision => entity.Revision ?? 0;
+        public bool Debug => entity.Debug ?? false;
         public bool HasBody => !string.IsNullOrEmpty(entity.ValueJson);
         public bool IsParentResolved => Parent is ItemBase;
         public DefaultItemReference Parent {
             get { return parent; }
             set { parent = value; } }
-        public DateTime Created => entity.Created;
-        public DateTime Modified => entity.Modified;
+        public DateTime Created => entity.Created ?? DateTime.MinValue;
+        public DateTime Modified => entity.Modified ?? DateTime.MinValue;
 
         public bool IsNew { get; }
 
@@ -131,7 +131,7 @@ namespace Itemify.Core.Item
             var now = DateTime.Now;
             now = new DateTime(now.Ticks - (now.Ticks % TimeSpan.TicksPerMillisecond)); // cut off ticks
 
-            if (entity.Created == DateTime.MinValue)
+            if (!entity.Created.HasValue || entity.Created == DateTime.MinValue)
             {
                 entity.Revision = 0;
                 entity.Created = now;
@@ -142,6 +142,7 @@ namespace Itemify.Core.Item
             }
 
             entity.Modified = now;
+            if (!entity.Debug.HasValue) entity.Debug = false;
 
             return entity;
         }

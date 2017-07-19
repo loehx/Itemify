@@ -16,7 +16,7 @@ namespace Itemify.Core.Spec
     public class ItemProviderTests : IDisposable
     {
         private const string SCHEMA = "spec";
-        private const string CONNECTION_STRING = "Server=127.0.0.1;Port=5432;Database=itemic;User Id=postgres;Password=abc;";
+        private const string CONNECTION_STRING = "Server=127.0.0.1;Port=5432;Database=itemify_tests;User Id=postgres;Password=abc;";
         private PostgreSqlConnectionPool connectionPool = PostgreSqlConnectionPoolFactory.GetPoolByConnectionString(CONNECTION_STRING, 60, 5000);
         private PostgreSqlProvider sqlProvider;
         private EntityProvider entityProvider;
@@ -73,7 +73,7 @@ namespace Itemify.Core.Spec
             Assert.Equal(item.Modified, DateTime.MinValue);
             Assert.False(item.IsParentResolved);
             Assert.Equal(item.Debug, false);
-            Assert.Equal(item.Name, "[unknown]");
+            Assert.Equal(item.Name, null);
             Assert.Equal(item.Order, 0);
             Assert.Equal(item.Parent, provider.Root);
             Assert.Equal(item.Revision, 0);
@@ -160,7 +160,7 @@ namespace Itemify.Core.Spec
             Assert.Equal(item.Modified, DateTime.MinValue);
             Assert.False(item.IsParentResolved);
             Assert.Equal(item.Debug, false);
-            Assert.Equal(item.Name, "[unknown]");
+            Assert.Equal(item.Name, "");
             Assert.Equal(item.Order, int.MaxValue);
             Assert.Equal(item.Parent, provider.Root);
             Assert.Equal(item.Revision, 0);
@@ -349,7 +349,7 @@ namespace Itemify.Core.Spec
 
             Assert.Equal(id, saved.Guid);
             Assert.Equal(0, saved.Revision);
-            Assert.Equal("[unknown]", saved.Name);
+            Assert.Equal(null, saved.Name);
             Assert.Equal(0, saved.Order);
             Assert.Equal(null, saved.ValueDate);
             Assert.Equal(null, saved.ValueNumber);
@@ -411,7 +411,7 @@ namespace Itemify.Core.Spec
             Assert.Equal(actual.Modified, item.Modified);
             Assert.False(actual.IsParentResolved);
             Assert.Equal(actual.Debug, false);
-            Assert.Equal(actual.Name, "[Actor]");
+            Assert.Equal(actual.Name, null);
             Assert.Equal(actual.Order, Int32.MaxValue);
             Assert.Equal(actual.Parent, provider.Root);
             Assert.Equal(actual.Revision, 0);
@@ -443,6 +443,52 @@ namespace Itemify.Core.Spec
 
             found = provider.GetItemByReference(item);
             Assert.Null(found);
+        }
+
+        [Fact]
+        public void RemoveItem_AndRelations()
+        {
+            var a = new DefaultItem(Guid.NewGuid(), DeviceType.Actor);
+            var b = new DefaultItem(Guid.NewGuid(), DeviceType.Actor);
+
+            provider.SaveNew(a);
+            provider.SaveNew(b);
+            provider.AddRelations(a, new []{ b }); // Relation A->B
+
+            var foundA = provider.GetItemByReference(a, ItemResolving.Default.RelatedItemsOfType(DeviceType.Actor));
+            Assert.Equal(b.Guid, foundA.Related.First().Guid);
+
+            provider.RemoveItemByReference(b); // A->B should not exist anymore
+
+            var c = new DefaultItem(b.Guid, DeviceType.Actor);
+            provider.SaveNew(c); // Insert C as B (same ID and Type)
+
+            foundA = provider.GetItemByReference(a, ItemResolving.Default.RelatedItemsOfType(DeviceType.Actor)); // Check relations of A
+            Assert.NotNull(foundA);
+            Assert.Equal(0, foundA.Related.Count);
+        }
+
+        [Fact]
+        public void RemoveItem_AndChildren()
+        {
+            var a = new DefaultItem(Guid.NewGuid(), DeviceType.Actor);
+            var b = new DefaultItem(Guid.NewGuid(), DeviceType.Actor, a);
+
+            provider.SaveNew(a);
+            provider.SaveNew(b);
+            provider.RemoveItemByReference(a);
+
+            var foundA = provider.GetItemByReference(a, ItemResolving.Default.RelatedItemsOfType(DeviceType.Actor));
+            Assert.Null(foundA);
+
+            var foundB = provider.GetItemByReference(b, ItemResolving.Default.RelatedItemsOfType(DeviceType.Actor));
+            Assert.NotNull(foundB);
+            Assert.Equal(provider.Root.Guid, foundB.Parent.Guid);
+            Assert.Equal(provider.Root.Type, foundB.Parent.Type);
+
+            var rootChildren = provider.GetChildrenOfItemByReference(provider.Root, DeviceType.Actor).ToArray();
+            Assert.Equal(b.Guid, rootChildren.First().Guid);
+            Assert.Equal(b.Type, rootChildren.First().Type);
         }
 
         #endregion

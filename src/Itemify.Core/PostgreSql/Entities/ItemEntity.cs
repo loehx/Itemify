@@ -45,15 +45,15 @@ namespace Itemify.Core.PostgreSql.Entities
         public string SubTypes { get; set; }
 
         [PostgreSqlColumn]
-        public DateTime Created { get; set; }
+        public DateTime? Created { get; set; }
 
         [PostgreSqlColumn]
-        public DateTime Modified { get; set; }
+        public DateTime? Modified { get; set; }
 
         [PostgreSqlColumn]
-        public int Revision { get; set; }
+        public int? Revision { get; set; }
 
         [PostgreSqlColumn]
-        public bool Debug { get; set; }
+        public bool? Debug { get; set; }
     }
 }

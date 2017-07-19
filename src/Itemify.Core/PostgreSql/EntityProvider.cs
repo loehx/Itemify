@@ -53,7 +53,7 @@ namespace Itemify.Core.PostgreSql
             return postgreSql.BulkInsert(tableName, entities);
         }
 
-        public void InsertItemRelations(string tableName, Guid guid,
+        public void InsertEntityRelations(string tableName, Guid guid,
             IEnumerable<KeyValuePair<Guid, string>> targetItems, string mappingTableName, bool overwrite)
         {
             tableName = resolveTable<ItemEntity>(tableName, guid == Guid.Empty);
@@ -73,7 +73,7 @@ namespace Itemify.Core.PostgreSql
             postgreSql.BulkInsert(mappingTableName, relations);
         }
 
-        public void DeleteItemRelations(string tableName, Guid guid, string mappingTableName, IEnumerable<string> targetTables)
+        public int RemoveEntityRelations(string tableName, Guid guid, string mappingTableName, IEnumerable<string> targetTables)
         {
             tableName = resolveTable<ItemEntity>(tableName, guid == Guid.Empty);
             mappingTableName = resolveTable<ItemRelationEntity>(mappingTableName);
@@ -81,18 +81,34 @@ namespace Itemify.Core.PostgreSql
                 .Concat(targetTables.Select(k => resolveTable<ItemEntity>(k)))
                 .ToArray();
 
-            postgreSql.Execute("DELETE FROM " + mappingTableName +
+            return postgreSql.Execute("DELETE FROM " + mappingTableName +
                                $" WHERE \"guid\" = @0 AND \"table_name\" LIKE @1 AND \"t_table_name\" IN ({ parameters.Length.Times().Skip(2).Select(i => "@" + i).Join(", ") })", parameters);
         }
 
-        public void Delete(string tableName, Guid guid)
+        public int RemoveEntityRelations(string tableName, Guid guid, string mappingTableName)
+        {
+            mappingTableName = resolveTable<ItemRelationEntity>(mappingTableName);
+            tableName = resolveTable<ItemEntity>(tableName);
+
+            var query = $"DELETE FROM {mappingTableName} WHERE (\"guid\" = @0 AND \"table_name\" LIKE @1) OR (\"t_guid\" = @0 AND \"t_table_name\" LIKE @1);";
+            return postgreSql.Execute(query, guid, tableName);
+        }
+
+        public void DeleteEntity(string tableName, Guid guid)
         {
             tableName = resolveTable<ItemEntity>(tableName);
-            var affected = postgreSql.Execute($"DELETE FROM {tableName} WHERE \"Guid\" = @0", guid);
+
+            var query = new StringBuilder();
+            var parameter = new List<object>();
+
+            query.AppendLine($"DELETE FROM {tableName} WHERE \"Guid\" = @0;");
+            parameter.Add(guid);
+
+            var affected = postgreSql.Execute(query.ToString(), guid);
             log.Describe($"Deleted {affected} item(s) successfully.");
         }
 
-        public IEnumerable<ItemEntity> QueryItemsByRelation(string tableName, Guid guid, string targetTableName, string mappingTableName, bool bidirectional)
+        public IEnumerable<ItemEntity> QueryEntityRelations(string tableName, Guid guid, string targetTableName, string mappingTableName, bool bidirectional)
         {
             tableName = resolveTable<ItemEntity>(tableName, guid == Guid.Empty);
             targetTableName = resolveTable<ItemEntity>(targetTableName);
@@ -101,7 +117,7 @@ namespace Itemify.Core.PostgreSql
             if (bidirectional)
             {
                 // TODO: Put an INDEX on both guid+table_name and t_guid+t_table_name
-                return postgreSql.Query<ItemEntity>($"SELECT * FROM {targetTableName} WHERE \"Guid\" IN (SELECT \"t_guid\" FROM {mappingTableName} WHERE \"guid\" = @0 AND \"table_name\" LIKE @1 UNION SELECT \"guid\" FROM {mappingTableName} WHERE \"t_guid\" = @0 AND \"t_table_name\" LIKE @1)", guid, tableName);
+                return postgreSql.Query<ItemEntity>($"SELECT * FROM {targetTableName} WHERE \"Guid\" IN (SELECT \"t_guid\" FROM {mappingTableName} WHERE (\"guid\" = @0 AND \"table_name\" LIKE @1) UNION SELECT \"guid\" FROM {mappingTableName} WHERE (\"t_guid\" = @0 AND \"t_table_name\" LIKE @1))", guid, tableName);
             }
             else
             {
@@ -109,7 +125,32 @@ namespace Itemify.Core.PostgreSql
             }
         }
 
-        public ItemEntity QuerySingleItem(string tableName, Guid guid)
+        public IEnumerable<ItemEntity> QueryEntityRelations(string tableName, Guid guid,
+            string mappingTableName, bool bidirectional)
+        {
+            tableName = resolveTable<ItemEntity>(tableName, guid == Guid.Empty);
+            mappingTableName = resolveTable<ItemRelationEntity>(mappingTableName);
+            string[] targetTableNames = null;
+
+            if (bidirectional)
+            {
+                targetTableNames = postgreSql.Query($"SELECT \"t_table_name\" FROM {mappingTableName} WHERE \"guid\" = @0 AND \"table_name\" LIKE @1" +
+                                                    $" UNION SELECT \"table_name\" FROM {mappingTableName} WHERE \"t_guid\" = @0 AND \"t_table_name\" LIKE @1", guid, tableName)
+                    .ToArray(k => (string)k[0]);
+            }
+            else
+            {
+                targetTableNames = postgreSql.Query($"SELECT \"t_table_name\" FROM {mappingTableName} WHERE \"guid\" = @0 AND \"table_name\" LIKE @1", guid, tableName)
+                    .ToArray(k => (string)k[0]);
+            }
+
+            // TODO: Optimize performance
+            return targetTableNames.SelectMany(t => QueryEntityRelations(tableName, guid, t,
+                mappingTableName, bidirectional));
+        }
+
+
+        public ItemEntity QuerySingleEntity(string tableName, Guid guid)
         {
             tableName = resolveTable<ItemEntity>(tableName);
             return postgreSql.Query<ItemEntity>("SELECT * FROM " + tableName + " WHERE \"Guid\" = @0", guid).FirstOrDefault();
@@ -117,12 +158,12 @@ namespace Itemify.Core.PostgreSql
 
 
 
-        private string resolveTable<TSchema>(string tableName, bool isRoot = false)
+        private string resolveTable<TSchema>(string tableName, bool ignoreTableExists = false)
            where TSchema : IEntityBase
         {
             tableName = postgreSql.ResolveTableName(tableName);
 
-            if (isRoot) return tableName;
+            if (ignoreTableExists) return tableName;
 
             lock (syncRoot)
             {
@@ -142,27 +183,27 @@ namespace Itemify.Core.PostgreSql
             return tableName;
         }
 
-        public IEnumerable<ItemEntity> QueryItemsByName(string tableName, string pattern)
+        public IEnumerable<ItemEntity> QueryEntitiesByName(string tableName, string pattern)
         {
             tableName = postgreSql.ResolveTableName(tableName);
             pattern = pattern.Replace("_", "\\_"); // Disable PostgreSQL's: Single character wildcard (_)
             return postgreSql.Query<ItemEntity>($"SELECT * FROM {tableName} WHERE \"Name\" ILIKE @0", pattern);
         }
 
-        public IEnumerable<ItemEntity> QueryItemsByStringValue(string tableName, string pattern)
+        public IEnumerable<ItemEntity> QueryEntitiesByStringValue(string tableName, string pattern)
         {
             tableName = postgreSql.ResolveTableName(tableName);
             pattern = pattern.Replace("_", "\\_"); // Disable PostgreSQL's: Single character wildcard (_)
             return postgreSql.Query<ItemEntity>($"SELECT * FROM {tableName} WHERE \"ValueString\" ILIKE @0", pattern);
         }
 
-        public IEnumerable<ItemEntity> QueryItemsByNumberValue(string tableName, double from, double to)
+        public IEnumerable<ItemEntity> QueryEntitiesByNumberValue(string tableName, double from, double to)
         {
             tableName = postgreSql.ResolveTableName(tableName);
             return postgreSql.Query<ItemEntity>($"SELECT * FROM {tableName} WHERE \"ValueNumber\" >= @0 AND \"ValueNumber\" <= @1", from, to);
         }
 
-        public IEnumerable<ItemEntity> QueryItemsByDateTimeValue(string tableName, DateTime from, DateTime to)
+        public IEnumerable<ItemEntity> QueryEntitiesByDateTimeValue(string tableName, DateTime from, DateTime to)
         {
             tableName = postgreSql.ResolveTableName(tableName);
             return postgreSql.Query<ItemEntity>($"SELECT * FROM {tableName} WHERE \"ValueDate\" >= @0 AND \"ValueDate\" <= @1", from, to);
@@ -174,7 +215,7 @@ namespace Itemify.Core.PostgreSql
             postgreSql.EnsureSchemaExists();
         }
 
-        public IEnumerable<ItemEntity> QueryItemsByTypes(IEnumerable<string> tableNames)
+        public IEnumerable<ItemEntity> QueryEntitiesByTableNames(IEnumerable<string> tableNames)
         {
             var sql = new StringBuilder();
 
@@ -189,6 +230,16 @@ namespace Itemify.Core.PostgreSql
             sql.Length -= "UNION".Length + 2;
 
             return postgreSql.Query<ItemEntity>(sql.ToString());
+        }
+
+        public int ReplaceEntityRelationSources(string mappingTable, Guid guid, string tableName, Guid newGuid, string newTableName, bool newItemIsVirtual)
+        {
+            mappingTable = resolveTable<ItemRelationEntity>(mappingTable);
+            tableName = resolveTable<ItemEntity>(tableName);
+            newTableName = resolveTable<ItemEntity>(newTableName, newItemIsVirtual);
+
+            var query = $"UPDATE {mappingTable} SET \"guid\" = @0, \"table_name\" = @1 WHERE \"guid\" = @2 AND \"table_name\" LIKE @3";
+            return postgreSql.Execute(query, newGuid, newTableName, guid, tableName);
         }
     }
 }

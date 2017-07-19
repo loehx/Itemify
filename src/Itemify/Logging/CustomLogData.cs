@@ -57,7 +57,9 @@ namespace Itemify.Logging
                 if (entry.Description.IsNotEmpty())
                 {
                     var description = descPrefix +
-                                      entry.Description.Replace(Environment.NewLine, Environment.NewLine + descPrefix);
+                                      entry.Description
+                                          .Replace("\r", "")
+                                          .Replace("\n", Environment.NewLine + descPrefix);
                     write(description);
                 }
             }
