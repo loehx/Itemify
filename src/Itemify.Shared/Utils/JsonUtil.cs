@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -144,14 +145,5 @@ namespace Itemify.Shared.Utils
             filePath = Path.Combine(directory, fname);
             File.WriteAllText(filePath, contents, Encoding.Default);
         }
-
-#if NET_CORE
-
-        private abstract class Encoding : System.Text.Encoding
-        {
-            public static System.Text.Encoding Default { get { return System.Text.Encoding.GetEncoding(0); } }
-
-        }
-#endif
     }
 }
