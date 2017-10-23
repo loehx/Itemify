@@ -14,6 +14,8 @@ namespace Itemify
         private string database;
         private int connectionPoolSize;
         private int timeout;
+        private string sslMode;
+        private bool trustServerCertificate;
 
         public ItemifySettings()
         {
@@ -23,7 +25,7 @@ namespace Itemify
             };
         }
         
-        public ItemifySettings(string host, int port, string username, string password, string database, int connectionPoolSize, int timeout)
+        public ItemifySettings(string host, int port, string username, string password, string database, int connectionPoolSize, int timeout, string sslMode, bool trustServerCertificate)
         {
             this.host = host;
             this.port = port;
@@ -32,6 +34,8 @@ namespace Itemify
             this.database = database;
             this.connectionPoolSize = connectionPoolSize;
             this.timeout = timeout;
+            this.sslMode = sslMode;
+            this.trustServerCertificate = trustServerCertificate;
 
             providerSettings = new ItemProviderSettings
             {
@@ -97,7 +101,18 @@ namespace Itemify
             set => providerSettings.Schema = value;
         }
 
-        public string PostgreSqlConnectionString => $"Host={host};Port={port};Username={username};Password={password};Database={database};Pooling=true;Minimum Pool Size=1;Maximum Pool Size={connectionPoolSize}";
+        public string SslMode
+        {
+            get => sslMode;
+            set => sslMode = value;
+        }
+        public bool TrustServerCertificate
+        {
+            get => trustServerCertificate;
+            set => trustServerCertificate = value;
+        }
+
+        public string PostgreSqlConnectionString => $"Host={host};Port={port};Username={username};Password={password};Database={database};Pooling=true;Minimum Pool Size=1;Maximum Pool Size={connectionPoolSize};SSL Mode={SslMode};Trust Server Certificate={TrustServerCertificate}";
 
         internal ItemProviderSettings GetProviderSettings()
         {
