@@ -26,7 +26,7 @@ namespace Itemify.Shared.Utils
                     ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
                     ContractResolver = new CamelCasePropertyNamesContractResolver(),
                     NullValueHandling = NullValueHandling.Ignore,
-                    TypeNameHandling = TypeNameHandling.Auto
+                    TypeNameHandling = TypeNameHandling.None
                 };
 
                 s.Converters.Add(new StringEnumConverter()
